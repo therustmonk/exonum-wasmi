@@ -1,7 +1,7 @@
 # Exonum + Wasmi
 
-To run use:
+To run the node use:
 
 ```
-cargo run
+cargo run --bin node
 ```
