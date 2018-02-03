@@ -1,0 +1,3 @@
+[submodule "closure-alloc"]
+	path = closure-alloc
+	url = git@github.com:pepyakin/closure-alloc.git
