@@ -1,0 +1,13 @@
+[package]
+name = "exonum-wasm"
+version = "0.1.0"
+authors = ["Denis Kolodin <denis.kolodin@xdev.re>"]
+
+[dependencies]
+exonum = "0.5.1"
+wasmi = { git = "https://github.com/pepyakin/wasmi" }
+iron = "0.6.0"
+bodyparser = "0.8.0"
+router = "0.6.0"
+serde = "1.0"
+serde_json = "1.0"
