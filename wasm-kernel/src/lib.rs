@@ -35,23 +35,24 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[no_mangle]
 pub fn execute_transaction() {
-    let args = ext::args();
+    // let args = ext::args();
     
-    let inc_by = args[0] as u8;
-    let mut current_value = ext::get_storage(b"counter");
-    if current_value.len() == 0 {
-        current_value = vec![inc_by];
-    } else {
-        current_value[0] += inc_by;
-    }
+    // let inc_by = args[0] as u8;
+    // let mut current_value = ext::get_storage(b"counter");
+    // if current_value.len() == 0 {
+    //     current_value = vec![inc_by];
+    // } else {
+    //     current_value[0] += inc_by;
+    // }
 
-    ext::debug(&current_value);
-    ext::set_storage(b"counter", &current_value);
+    // ext::debug(&current_value);
+    // ext::set_storage(b"counter", &current_value);
 
-    ext::return_data(Ok(&current_value))
+    // ext::return_data(Ok(&current_value))
+
+    ext::debug(b"hello world!");
 }
 
 #[no_mangle]
-pub fn query_state() {
-    
+pub fn query_state() {    
 }

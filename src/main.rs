@@ -10,6 +10,7 @@ extern crate iron;
 extern crate wasmi;
 
 mod service;
+mod wasm;
 
 use exonum::blockchain::{GenesisConfig, ValidatorKeys};
 use exonum::node::{Node, NodeApiConfig, NodeConfig};

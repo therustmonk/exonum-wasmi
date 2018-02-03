@@ -12,7 +12,6 @@ use router::Router;
 use serde::Deserialize;
 use serde_json;
 use bodyparser;
-use wasmi::{ModuleInstance, NopExternals, RuntimeValue, ImportsBuilder, Module};
 
 // // // // // // // // // // CONSTANTS // // // // // // // // // //
 
