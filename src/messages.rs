@@ -1,8 +1,8 @@
 
 pub const SERVICE_ID: u16 = 1;
 
-const TX_DEPLOY: u16 = 1;
-const TX_CALL: u16 = 2;
+pub const TX_DEPLOY: u16 = 1;
+pub const TX_CALL: u16 = 2;
 
 message! {
     struct TxDeploy {
