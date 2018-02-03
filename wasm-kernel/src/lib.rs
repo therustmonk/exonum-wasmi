@@ -34,25 +34,27 @@ pub extern "C" fn panic_fmt(
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[no_mangle]
-pub fn execute_transaction() {
-    // let args = ext::args();
-    
-    // let inc_by = args[0] as u8;
-    // let mut current_value = ext::get_storage(b"counter");
-    // if current_value.len() == 0 {
-    //     current_value = vec![inc_by];
-    // } else {
-    //     current_value[0] += inc_by;
-    // }
-
-    // ext::debug(&current_value);
-    // ext::set_storage(b"counter", &current_value);
-
-    // ext::return_data(Ok(&current_value))
-
-    ext::debug(b"hello world!");
+pub fn test_print_args() {
+    let args = ext::args();
+    ext::debug(b"args!");
+    ext::debug(&args);
 }
 
 #[no_mangle]
-pub fn query_state() {    
+pub fn test_return_args() {
+    let args = ext::args();
+    ext::return_data(&args);
+}
+
+#[no_mangle]
+pub fn test_set_storage() {
+    let args = ext::args();
+    ext::set_storage(&args, b"you found me!");
+}
+
+#[no_mangle]
+pub fn test_get_storage() {
+    let args = ext::args();
+    let value = ext::get_storage(&args);
+    ext::return_data(&value);
 }

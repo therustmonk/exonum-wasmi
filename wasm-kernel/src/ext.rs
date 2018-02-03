@@ -11,13 +11,10 @@ mod ffi {
     extern "C" {
         pub fn debug(msg_ptr: *const u8, msg_len: usize);
 
-        pub fn args(
-            cb: extern "C" fn(*mut Void, usize) -> *mut u8,
-            cb_data: *mut Void,
-        );
+        pub fn args(ptr: *mut u8);
+        pub fn args_len() -> usize;
 
         pub fn return_data(
-            result: usize,
             value_ptr: *const u8,
             value_len: usize,
         );
@@ -29,11 +26,15 @@ mod ffi {
             value_len: usize,
         );
 
+        pub fn get_storage_len(
+            key_ptr: *const u8,
+            key_len: usize,
+        ) -> usize;
+
         pub fn get_storage(
             key_ptr: *const u8,
             key_len: usize,
-            cb: extern "C" fn(*mut Void, usize) -> *mut u8,
-            cb_data: *mut Void,
+            value_ptr: *const u8,
         );
     }
 }
@@ -75,43 +76,36 @@ pub fn debug(msg: &[u8]) {
 
 /// Return arguments for current request.
 pub fn args() -> Vec<u8> {
-    let mut value = Vec::new();
-    {
-        let reserve_space = |size: usize| {
-            reserve_vec_space(&mut value, size)
-        };
-        unsafe {
-            let (cb, cb_data) = wrap_closure(&reserve_space);
-            ffi::args(cb, cb_data);
-        }
+    unsafe {
+        let args_len = ffi::args_len();
+        let mut args = vec![0u8; args_len];
+        ffi::args(args.as_mut_ptr());
+        args
     }
-    value
 }
 
-/// Signal the result and return data of the execution.
-pub fn return_data(result: Result<&[u8], ()>) {
-    let (result, value_ptr, value_len) = match result {
-        Ok(value) => (1, value.as_ptr(), value.len()),
-        Err(()) => (0, ptr::null(), 0),
-    };
+/// Return data of the execution.
+pub fn return_data(value: &[u8]) {
     unsafe {
-        ffi::return_data(result, value_ptr, value_len);
+        ffi::return_data(value.as_ptr(), value.len());
     }
 }
 
 /// Load value from key-value storage.
 pub fn get_storage(key: &[u8]) -> Vec<u8> {
-    let mut value = Vec::new();
-    {
-        let reserve_space = |size: usize| {
-            reserve_vec_space(&mut value, size)
-        };
-        unsafe {
-            let (cb, cb_data) = wrap_closure(&reserve_space);
-            ffi::get_storage(key.as_ptr(), key.len(), cb, cb_data);
-        }
+    unsafe {
+        let value_len = ffi::get_storage_len(
+            key.as_ptr(),
+            key.len(),
+        );
+        let mut value = vec![0u8; value_len];
+        ffi::get_storage(
+            key.as_ptr(),
+            key.len(),
+            value.as_mut_ptr(),
+        );
+        value   
     }
-    value
 }
 
 /// Storage value to key-value storage.
