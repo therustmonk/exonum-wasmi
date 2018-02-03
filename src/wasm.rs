@@ -9,10 +9,16 @@ const RETURN_DATA_FUNC: usize = 3;
 const SET_STORAGE_FUNC: usize = 4;
 const GET_STORAGE_FUNC: usize = 5;
 
+pub trait Storage {
+    fn set(&mut self, key: &[u8], value: &[u8]);
+    fn get(&self, key: &[u8]) -> &[u8];
+}
+
 struct Runtime<'a> {
     memory: MemoryRef,
     args: &'a [u8],
     return_data: Vec<u8>,
+    storage: &'a mut Storage,
 }
 
 impl<'a> Runtime<'a> {
@@ -45,12 +51,12 @@ impl<'a> Externals for Runtime<'a> {
             ARGS_LEN_FUNC => {
                 let len = self.args.len() as u32;
                 Ok(Some(len.into()))
-            },
+            }
             ARGS_FUNC => {
                 let ptr: u32 = args.nth(0);
                 self.memory.set(ptr, self.args).expect("Failed to set args");
                 Ok(None)
-            },
+            }
             RETURN_DATA_FUNC => {
                 let ptr: u32 = args.nth(0);
                 let len: u32 = args.nth(1);
@@ -63,7 +69,27 @@ impl<'a> Externals for Runtime<'a> {
                 self.return_data = return_data;
 
                 Ok(None)
-            },
+            }
+            SET_STORAGE_FUNC => {
+                let key_ptr: u32 = args.nth(0);
+                let key_len: u32 = args.nth(1);
+                let value_ptr: u32 = args.nth(2);
+                let value_len: u32 = args.nth(3);
+
+                let mut key = vec![0u8; key_len as usize];
+                let mut value = vec![0u8; value_len as usize];
+
+                self.memory
+                    .get_into(key_ptr, &mut key)
+                    .expect("Failed to read key");
+                self.memory
+                    .get_into(value_ptr, &mut value)
+                    .expect("Failed to read value");
+
+                self.storage.set(&key, &value);
+
+                Ok(None)
+            }
             _ => {
                 // TODO: Implement all the stuff/
                 Ok(None)
@@ -119,7 +145,7 @@ impl ModuleImportResolver for RuntimeImportResolver {
     }
 }
 
-pub fn execute_wasm(wasm: &[u8], func_name: &str, args: &[u8]) -> Vec<u8> {
+pub fn execute_wasm(wasm: &[u8], func_name: &str, args: &[u8], storage: &mut Storage) -> Vec<u8> {
     let module = Module::from_buffer(wasm).expect("Can't load wasm");
     let instance = ModuleInstance::new(
         &module,
@@ -133,10 +159,11 @@ pub fn execute_wasm(wasm: &[u8], func_name: &str, args: &[u8]) -> Vec<u8> {
         .expect("export 'memory' is not a memory")
         .clone();
 
-    let mut runtime = Runtime { 
+    let mut runtime = Runtime {
         memory,
         args,
         return_data: Vec::new(),
+        storage,
     };
 
     let instance = instance
@@ -154,18 +181,41 @@ mod tests {
     use std::path::Path;
     use std::io;
     use std::fs::File;
-    use super::execute_wasm;
+    use std::collections::HashMap;
+    use super::{execute_wasm, Storage};
+
+    #[derive(Default)]
+    struct MockStorage {
+        data: HashMap<Vec<u8>, Vec<u8>>,
+    }
+
+    impl Storage for MockStorage {
+        fn get(&self, key: &[u8]) -> &[u8] {
+            self.data.get(key).map(|v| &*v as &[u8]).unwrap_or(&[])
+        }
+
+        fn set(&mut self, key: &[u8], value: &[u8]) {
+            self.data.insert(key.to_vec(), value.to_vec());
+        }
+    }
 
     const WASM_KERNEL: &'static [u8] = include_bytes!("../wasm-kernel/wasm_kernel.wasm");
 
     #[test]
     fn print_args() {
-        let result = execute_wasm(WASM_KERNEL, "test_print_args", b"ARGS");
+        let _ = execute_wasm(WASM_KERNEL, "test_print_args", b"ARGS", &mut MockStorage::default());
     }
 
     #[test]
     fn return_args() {
-        let result = execute_wasm(WASM_KERNEL, "test_return_args", b"ARGS1");
+        let result = execute_wasm(WASM_KERNEL, "test_return_args", b"ARGS1", &mut MockStorage::default());
         assert_eq!(&result, b"ARGS1");
+    }
+
+    #[test]
+    fn set_storage() {
+        let mut storage = MockStorage::default();
+        let _ = execute_wasm(WASM_KERNEL, "test_set_storage", b"some_key", &mut storage);
+        assert_eq!(storage.get(b"some_key"), b"you found me!");
     }
 }
