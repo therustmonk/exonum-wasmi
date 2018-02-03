@@ -25,3 +25,11 @@ message! {
         seed: u64,
     }
 }
+
+encoding_struct! {
+    struct Query {
+        name: &str,
+        func: &str,
+        data: &[u8],
+    }
+}

@@ -23,9 +23,5 @@ name = "node"
 path = "src/node.rs"
 
 [[bin]]
-name = "deploy"
-path = "src/deploy.rs"
-
-[[bin]]
-name = "call"
-path = "src/call.rs"
+name = "client"
+path = "src/client.rs"

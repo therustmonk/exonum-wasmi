@@ -12,6 +12,7 @@ use router::Router;
 use serde::Deserialize;
 use messages::*;
 use wasm;
+use serde_json;
 
 // // // // // // // // // // PERSISTENT DATA // // // // // // // // // //
 
@@ -39,6 +40,11 @@ impl<T: AsRef<Snapshot>> WasmSchema<T> {
     pub fn contract(&self, name: &String) -> Option<Contract> {
         self.contracts().get(name)
     }
+
+    pub fn storage(&self, name: &str) -> MapIndex<&Snapshot, Vec<u8>, Vec<u8>> {
+        let storage_key = format!("wasmi.storage.{}", name);
+        MapIndex::new(&storage_key, self.view.as_ref())
+    } 
 }
 
 impl<'a> WasmSchema<&'a mut Fork> {
@@ -59,6 +65,16 @@ impl<'a> wasm::Storage for MapIndex<&'a mut Fork, Vec<u8>, Vec<u8>> {
 
     fn set(&mut self, key: &[u8], value: &[u8]) {
         MapIndex::put(self, &key.to_vec(), value.to_vec())
+    }
+}
+
+impl<'a> wasm::Storage for MapIndex<&'a Snapshot, Vec<u8>, Vec<u8>> {
+    fn get(&self, key: &[u8]) -> Vec<u8> {
+        MapIndex::get(self, &key.to_vec()).unwrap_or(Vec::new())
+    }
+
+    fn set(&mut self, _key: &[u8], _value: &[u8]) {
+        panic!("trying to modify snapshot");
     }
 }
 
@@ -124,6 +140,27 @@ impl CryptocurrencyApi {
             "tx_hash": tx_hash
         }))
     }
+
+    fn query(&self, req: &mut Request) -> IronResult<Response> {
+        let mut buf = Vec::new();
+        req.body.read_to_end(&mut buf).unwrap();
+
+        let query: Query = match ::serde_json::from_slice(&buf) {
+            Ok(q) => q,
+            Err(e) => return Err(ApiError::IncorrectRequest(Box::new(e)))?,
+        };
+
+        let snapshot = self.blockchain.snapshot();
+        let schema = WasmSchema::new(snapshot);
+        let contract = schema.contract(&query.name().to_string());
+        if let Some(contract) = contract {
+            let mut storage = schema.storage(query.name());
+            let result = wasm::execute(contract.module(), query.func(), query.data(), &mut storage);
+            self.ok_response(&serde_json::to_value(result).unwrap())
+        } else {
+            self.not_found_response(&serde_json::to_value("not found").unwrap())
+        }
+    }
 }
 
 impl Api for CryptocurrencyApi {
@@ -132,10 +169,13 @@ impl Api for CryptocurrencyApi {
         let post_deploy = move |req: &mut Request| self_.post_transaction::<TxDeploy>(req);
         let self_ = self.clone();
         let post_call = move |req: &mut Request| self_.post_transaction::<TxCall>(req);
+        let self_ = self.clone();
+        let post_query = move |req: &mut Request| self_.query(req);
 
         // Bind handlers to specific routes.
         router.post("/contracts/deploy", post_deploy, "post_deploy");
         router.post("/contracts/call", post_call, "post_call");
+        router.post("/contracts/query", post_query, "post_query");
     }
 }
 
