@@ -41,17 +41,17 @@ impl<T: AsRef<Snapshot>> WasmSchema<T> {
         WasmSchema { view }
     }
 
-    pub fn contracts(&self) -> MapIndex<&Snapshot, PublicKey, Contract> {
+    pub fn contracts(&self) -> MapIndex<&Snapshot, String, Contract> {
         MapIndex::new("wasmi.contracts", self.view.as_ref())
     }
 
-    pub fn contract(&self, pub_key: &PublicKey) -> Option<Contract> {
-        self.contracts().get(pub_key)
+    pub fn contract(&self, name: &String) -> Option<Contract> {
+        self.contracts().get(name)
     }
 }
 
 impl<'a> WasmSchema<&'a mut Fork> {
-    pub fn contracts_mut(&mut self) -> MapIndex<&mut Fork, PublicKey, Contract> {
+    pub fn contracts_mut(&mut self) -> MapIndex<&mut Fork, String, Contract> {
         MapIndex::new("wasmi.contracts", &mut self.view)
     }
 }
@@ -87,6 +87,8 @@ impl Transaction for TxDeploy {
 
     fn execute(&self, view: &mut Fork) {
         let mut schema = WasmSchema::new(view);
+        let contract = Contract::new(self.module());
+        schema.contracts_mut().put(&self.name().to_string(), contract);
     }
 }
 
