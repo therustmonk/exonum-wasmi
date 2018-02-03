@@ -12,6 +12,13 @@ const GET_STORAGE_FUNC: usize = 5;
 struct Runtime<'a> {
     memory: MemoryRef,
     args: &'a [u8],
+    return_data: Vec<u8>,
+}
+
+impl<'a> Runtime<'a> {
+    fn into_return_data(self) -> Vec<u8> {
+        self.return_data
+    }
 }
 
 impl<'a> Externals for Runtime<'a> {
@@ -44,6 +51,19 @@ impl<'a> Externals for Runtime<'a> {
                 self.memory.set(ptr, self.args).expect("Failed to set args");
                 Ok(None)
             },
+            RETURN_DATA_FUNC => {
+                let ptr: u32 = args.nth(0);
+                let len: u32 = args.nth(1);
+
+                let mut return_data = vec![0u8; len as usize];
+                self.memory
+                    .get_into(ptr, &mut return_data)
+                    .expect("Failed to copy return buf");
+
+                self.return_data = return_data;
+
+                Ok(None)
+            },
             _ => {
                 // TODO: Implement all the stuff/
                 Ok(None)
@@ -61,7 +81,7 @@ impl RuntimeImportResolver {
             DEBUG_FUNC => (&[I32, I32], None),
             ARGS_FUNC => (&[I32], None),
             ARGS_LEN_FUNC => (&[], Some(I32)),
-            RETURN_DATA_FUNC => (&[I32, I32, I32], None),
+            RETURN_DATA_FUNC => (&[I32, I32], None),
             SET_STORAGE_FUNC => (&[I32, I32, I32, I32], None),
             GET_STORAGE_FUNC => (&[I32, I32, I32, I32], None),
             _ => return false,
@@ -99,7 +119,7 @@ impl ModuleImportResolver for RuntimeImportResolver {
     }
 }
 
-pub fn execute_wasm(wasm: &[u8], args: &[u8]) -> Vec<u8> {
+pub fn execute_wasm(wasm: &[u8], func_name: &str, args: &[u8]) -> Vec<u8> {
     let module = Module::from_buffer(wasm).expect("Can't load wasm");
     let instance = ModuleInstance::new(
         &module,
@@ -116,18 +136,17 @@ pub fn execute_wasm(wasm: &[u8], args: &[u8]) -> Vec<u8> {
     let mut runtime = Runtime { 
         memory,
         args,
+        return_data: Vec::new(),
     };
 
     let instance = instance
         .run_start(&mut runtime)
         .expect("Failed to run `start` function");
-    let result = instance
-        .invoke_export("execute_transaction", &[], &mut runtime)
+    let _ = instance
+        .invoke_export(func_name, &[], &mut runtime)
         .unwrap();
 
-    // TODO: fetch the return data.
-
-    Vec::new()
+    runtime.into_return_data()
 }
 
 #[cfg(test)]
@@ -137,19 +156,16 @@ mod tests {
     use std::fs::File;
     use super::execute_wasm;
 
-    fn read_file<P: AsRef<Path>>(path: P) -> io::Result<Vec<u8>> {
-        use std::io::Read;
+    const WASM_KERNEL: &'static [u8] = include_bytes!("../wasm-kernel/wasm_kernel.wasm");
 
-        let mut rom_file = File::open(path)?;
-        let mut rom_buffer = Vec::new();
-        rom_file.read_to_end(&mut rom_buffer)?;
-        Ok(rom_buffer)
+    #[test]
+    fn print_args() {
+        let result = execute_wasm(WASM_KERNEL, "test_print_args", b"ARGS");
     }
 
     #[test]
-    fn it_works() {
-        let wasm_kernel_buf =
-            read_file("wasm-kernel/wasm_kernel.wasm").expect("Failed to load wasm-kernel");
-        let result = execute_wasm(&wasm_kernel_buf, b"ARGS");
+    fn return_args() {
+        let result = execute_wasm(WASM_KERNEL, "test_return_args", b"ARGS1");
+        assert_eq!(&result, b"ARGS1");
     }
 }

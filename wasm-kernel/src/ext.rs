@@ -15,7 +15,6 @@ mod ffi {
         pub fn args_len() -> usize;
 
         pub fn return_data(
-            result: usize,
             value_ptr: *const u8,
             value_len: usize,
         );
@@ -81,14 +80,10 @@ pub fn args() -> Vec<u8> {
     }
 }
 
-/// Signal the result and return data of the execution.
-pub fn return_data(result: Result<&[u8], ()>) {
-    let (result, value_ptr, value_len) = match result {
-        Ok(value) => (1, value.as_ptr(), value.len()),
-        Err(()) => (0, ptr::null(), 0),
-    };
+/// Return data of the execution.
+pub fn return_data(value: &[u8]) {
     unsafe {
-        ffi::return_data(result, value_ptr, value_len);
+        ffi::return_data(value.as_ptr(), value.len());
     }
 }
 
