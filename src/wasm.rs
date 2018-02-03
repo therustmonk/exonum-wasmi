@@ -8,6 +8,7 @@ const ARGS_LEN_FUNC: usize = 2;
 const RETURN_DATA_FUNC: usize = 3;
 const SET_STORAGE_FUNC: usize = 4;
 const GET_STORAGE_FUNC: usize = 5;
+const GET_STORAGE_LEN_FUNC: usize = 6;
 
 pub trait Storage {
     fn set(&mut self, key: &[u8], value: &[u8]);
@@ -90,6 +91,36 @@ impl<'a> Externals for Runtime<'a> {
 
                 Ok(None)
             }
+            GET_STORAGE_FUNC => {
+                let key_ptr: u32 = args.nth(0);
+                let key_len: u32 = args.nth(1);
+                let value_ptr: u32 = args.nth(2);
+
+                let mut key = vec![0u8; key_len as usize];
+                self.memory
+                    .get_into(key_ptr, &mut key)
+                    .expect("Failed to read key");
+
+                let value = self.storage.get(&key);
+                self.memory
+                    .set(value_ptr, value)
+                    .expect("Failed to write value");
+
+                Ok(None)
+            }
+            GET_STORAGE_LEN_FUNC => {
+                let key_ptr: u32 = args.nth(0);
+                let key_len: u32 = args.nth(1);
+
+                let mut key = vec![0u8; key_len as usize];
+                self.memory
+                    .get_into(key_ptr, &mut key)
+                    .expect("Failed to read key");
+
+                let len = self.storage.get(&key).len() as u32;
+
+                Ok(Some(len.into()))
+            }
             _ => {
                 // TODO: Implement all the stuff/
                 Ok(None)
@@ -109,7 +140,8 @@ impl RuntimeImportResolver {
             ARGS_LEN_FUNC => (&[], Some(I32)),
             RETURN_DATA_FUNC => (&[I32, I32], None),
             SET_STORAGE_FUNC => (&[I32, I32, I32, I32], None),
-            GET_STORAGE_FUNC => (&[I32, I32, I32, I32], None),
+            GET_STORAGE_FUNC => (&[I32, I32, I32], None),
+            GET_STORAGE_LEN_FUNC => (&[I32, I32], Some(I32)),
             _ => return false,
         };
 
@@ -126,6 +158,7 @@ impl ModuleImportResolver for RuntimeImportResolver {
             "return_data" => RETURN_DATA_FUNC,
             "set_storage" => SET_STORAGE_FUNC,
             "get_storage" => GET_STORAGE_FUNC,
+            "get_storage_len" => GET_STORAGE_LEN_FUNC,
             _ => {
                 return Err(Error::Instantiation(format!(
                     "Export {} not found",
@@ -203,12 +236,22 @@ mod tests {
 
     #[test]
     fn print_args() {
-        let _ = execute_wasm(WASM_KERNEL, "test_print_args", b"ARGS", &mut MockStorage::default());
+        let _ = execute_wasm(
+            WASM_KERNEL,
+            "test_print_args",
+            b"ARGS",
+            &mut MockStorage::default(),
+        );
     }
 
     #[test]
     fn return_args() {
-        let result = execute_wasm(WASM_KERNEL, "test_return_args", b"ARGS1", &mut MockStorage::default());
+        let result = execute_wasm(
+            WASM_KERNEL,
+            "test_return_args",
+            b"ARGS1",
+            &mut MockStorage::default(),
+        );
         assert_eq!(&result, b"ARGS1");
     }
 
@@ -217,5 +260,15 @@ mod tests {
         let mut storage = MockStorage::default();
         let _ = execute_wasm(WASM_KERNEL, "test_set_storage", b"some_key", &mut storage);
         assert_eq!(storage.get(b"some_key"), b"you found me!");
+    }
+
+    #[test]
+    fn get_storage() {
+        let mut storage = MockStorage::default();
+        storage.set(b"key", b"value");
+
+        let value = execute_wasm(WASM_KERNEL, "test_get_storage", b"key", &mut storage);
+
+        assert_eq!(&value, b"value");
     }
 }

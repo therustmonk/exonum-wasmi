@@ -26,11 +26,15 @@ mod ffi {
             value_len: usize,
         );
 
+        pub fn get_storage_len(
+            key_ptr: *const u8,
+            key_len: usize,
+        ) -> usize;
+
         pub fn get_storage(
             key_ptr: *const u8,
             key_len: usize,
-            cb: extern "C" fn(*mut Void, usize) -> *mut u8,
-            cb_data: *mut Void,
+            value_ptr: *const u8,
         );
     }
 }
@@ -89,17 +93,19 @@ pub fn return_data(value: &[u8]) {
 
 /// Load value from key-value storage.
 pub fn get_storage(key: &[u8]) -> Vec<u8> {
-    let mut value = Vec::new();
-    {
-        let reserve_space = |size: usize| {
-            reserve_vec_space(&mut value, size)
-        };
-        unsafe {
-            let (cb, cb_data) = wrap_closure(&reserve_space);
-            ffi::get_storage(key.as_ptr(), key.len(), cb, cb_data);
-        }
+    unsafe {
+        let value_len = ffi::get_storage_len(
+            key.as_ptr(),
+            key.len(),
+        );
+        let mut value = vec![0u8; value_len];
+        ffi::get_storage(
+            key.as_ptr(),
+            key.len(),
+            value.as_mut_ptr(),
+        );
+        value   
     }
-    value
 }
 
 /// Storage value to key-value storage.
