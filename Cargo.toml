@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["Denis Kolodin <denis.kolodin@xdev.re>"]
 
 [dependencies]
+dotenv = "0.10.1"
 exonum = "0.5.1"
 wasmi = { git = "https://github.com/pepyakin/wasmi" }
 iron = "0.6.0"

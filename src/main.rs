@@ -1,3 +1,4 @@
+extern crate dotenv;
 extern crate serde;
 #[macro_use]
 extern crate serde_json;
@@ -50,6 +51,7 @@ fn node_config() -> NodeConfig {
 }
 
 fn main() {
+    dotenv::dotenv().ok();
     exonum::helpers::init_logger().unwrap();
     let node = Node::new(
         Box::new(MemoryDB::new()),
