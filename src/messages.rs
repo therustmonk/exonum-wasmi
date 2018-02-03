@@ -20,6 +20,8 @@ message! {
         const ID = TX_CALL;
 
         name: &str,
+        func: &str,
+        data: &[u8],
         seed: u64,
     }
 }

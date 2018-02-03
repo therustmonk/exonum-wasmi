@@ -12,6 +12,7 @@ crate-type = ["cdylib"]
 wee_alloc = { git = "https://github.com/fitzgen/wee_alloc.git", rev = "05d369a", default-features = false }
 # memcpy, etc
 rlibc = "1.0"
+byteorder = { version = "1", default-features = false }
 
 [profile.release]
 panic = "abort"

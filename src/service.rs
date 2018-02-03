@@ -1,20 +1,17 @@
 use std::io::Read;
 use exonum::blockchain::{Blockchain, Service, Transaction, ApiContext};
-use exonum::encoding::serialize::FromHex;
 use exonum::node::{TransactionSend, ApiSender};
 use exonum::messages::{RawTransaction, Message};
 use exonum::storage::{Fork, MapIndex, Snapshot};
-use exonum::crypto::{Hash, PublicKey};
+use exonum::crypto::Hash;
 use exonum::encoding;
 use exonum::api::{Api, ApiError};
 use iron::prelude::*;
 use iron::Handler;
 use router::Router;
 use serde::Deserialize;
-use serde_json;
-use bodyparser;
-use wasmi::{ModuleInstance, NopExternals, RuntimeValue, ImportsBuilder, Module};
 use messages::*;
+use wasm;
 
 // // // // // // // // // // PERSISTENT DATA // // // // // // // // // //
 
@@ -48,6 +45,21 @@ impl<'a> WasmSchema<&'a mut Fork> {
     pub fn contracts_mut(&mut self) -> MapIndex<&mut Fork, String, Contract> {
         MapIndex::new("wasmi.contracts", &mut self.view)
     }
+
+    pub fn storage_mut(&mut self, name: &str) -> MapIndex<&mut Fork, Vec<u8>, Vec<u8>> {
+        let storage_key = format!("wasmi.storage.{}", name);
+        MapIndex::new(&storage_key, &mut self.view)
+    } 
+}
+
+impl<'a> wasm::Storage for MapIndex<&'a mut Fork, Vec<u8>, Vec<u8>> {
+    fn get(&self, key: &[u8]) -> Vec<u8> {
+        MapIndex::get(self, &key.to_vec()).unwrap_or(Vec::new())
+    }
+
+    fn set(&mut self, key: &[u8], value: &[u8]) {
+        MapIndex::put(self, &key.to_vec(), value.to_vec())
+    }
 }
 
 // // // // // // // // // // CONTRACTS // // // // // // // // // //
@@ -74,6 +86,12 @@ impl Transaction for TxCall {
 
     fn execute(&self, view: &mut Fork) {
         let mut schema = WasmSchema::new(view);
+        let contract = schema.contract(&self.name().to_string());
+        if let Some(contract) = contract {
+            let mut storage = schema.storage_mut(self.name());
+            let _ = wasm::execute(contract.module(), self.func(), self.data(), &mut storage);
+            // TODO: can we return result here?
+        }
     }
 }
 
