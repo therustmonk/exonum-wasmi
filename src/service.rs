@@ -1,3 +1,4 @@
+use std::io::Read;
 use exonum::blockchain::{Blockchain, Service, Transaction, ApiContext};
 use exonum::encoding::serialize::FromHex;
 use exonum::node::{TransactionSend, ApiSender};
@@ -12,14 +13,8 @@ use router::Router;
 use serde::Deserialize;
 use serde_json;
 use bodyparser;
-
-// // // // // // // // // // CONSTANTS // // // // // // // // // //
-
-const SERVICE_ID: u16 = 1;
-
-// Constants for transaction types within the service.
-const TX_DEPLOY: u16 = 1;
-const TX_CALL: u16 = 2;
+use wasmi::{ModuleInstance, NopExternals, RuntimeValue, ImportsBuilder, Module};
+use messages::*;
 
 // // // // // // // // // // PERSISTENT DATA // // // // // // // // // //
 
@@ -40,40 +35,18 @@ impl<T: AsRef<Snapshot>> WasmSchema<T> {
         WasmSchema { view }
     }
 
-    pub fn contracts(&self) -> MapIndex<&Snapshot, PublicKey, Contract> {
+    pub fn contracts(&self) -> MapIndex<&Snapshot, String, Contract> {
         MapIndex::new("wasmi.contracts", self.view.as_ref())
     }
 
-    pub fn contract(&self, pub_key: &PublicKey) -> Option<Contract> {
-        self.contracts().get(pub_key)
+    pub fn contract(&self, name: &String) -> Option<Contract> {
+        self.contracts().get(name)
     }
 }
 
 impl<'a> WasmSchema<&'a mut Fork> {
-    pub fn contracts_mut(&mut self) -> MapIndex<&mut Fork, PublicKey, Contract> {
+    pub fn contracts_mut(&mut self) -> MapIndex<&mut Fork, String, Contract> {
         MapIndex::new("wasmi.contracts", &mut self.view)
-    }
-}
-
-// // // // // // // // // // TRANSACTIONS // // // // // // // // // //
-
-message! {
-    struct TxDeploy {
-        const TYPE = SERVICE_ID;
-        const ID = TX_DEPLOY;
-
-        name: &str,
-        module: &[u8],
-    }
-}
-
-message! {
-    struct TxCall {
-        const TYPE = SERVICE_ID;
-        const ID = TX_CALL;
-
-        name: &str,
-        seed: u64,
     }
 }
 
@@ -86,6 +59,11 @@ impl Transaction for TxDeploy {
 
     fn execute(&self, view: &mut Fork) {
         let mut schema = WasmSchema::new(view);
+        let contract = Contract::new(self.module());
+        schema.contracts_mut().put(
+            &self.name().to_string(),
+            contract,
+        );
     }
 }
 
@@ -112,26 +90,28 @@ impl CryptocurrencyApi {
     where
         T: Transaction + Clone + for<'de> Deserialize<'de>,
     {
-        match req.get::<bodyparser::Struct<T>>() {
-            Ok(Some(transaction)) => {
-                let transaction: Box<Transaction> = Box::new(transaction);
-                let tx_hash = transaction.hash();
-                self.channel.send(transaction).map_err(ApiError::from)?;
-                self.ok_response(&json!({
-                    "tx_hash": tx_hash
-                }))
+        let mut buf = Vec::new();
+        req.body.read_to_end(&mut buf).unwrap();
+        let raw = RawTransaction::from_vec(buf);
+        let transaction: Box<Transaction> = match raw.message_type() {
+            TX_DEPLOY => Box::new(TxDeploy::from_raw(raw).unwrap()),
+            TX_CALL => Box::new(TxCall::from_raw(raw).unwrap()),
+            id => {
+                panic!("wrong transaction type: {}", id);
             }
-            Ok(None) => Err(ApiError::IncorrectRequest("Empty request body".into()))?,
-            Err(e) => Err(ApiError::IncorrectRequest(Box::new(e)))?,
-        }
+        };
+        let tx_hash = transaction.hash();
+        self.channel.send(transaction).map_err(ApiError::from)?;
+        self.ok_response(&json!({
+            "tx_hash": tx_hash
+        }))
     }
 }
 
 impl Api for CryptocurrencyApi {
     fn wire(&self, router: &mut Router) {
         let self_ = self.clone();
-        let post_deploy =
-            move |req: &mut Request| self_.post_transaction::<TxDeploy>(req);
+        let post_deploy = move |req: &mut Request| self_.post_transaction::<TxDeploy>(req);
         let self_ = self.clone();
         let post_call = move |req: &mut Request| self_.post_transaction::<TxCall>(req);
 
@@ -155,8 +135,8 @@ impl Service for WasmService {
 
     fn tx_from_raw(&self, raw: RawTransaction) -> Result<Box<Transaction>, encoding::Error> {
         let trans: Box<Transaction> = match raw.message_type() {
-            TX_CALL => Box::new(TxCall::from_raw(raw)?),
             TX_DEPLOY => Box::new(TxDeploy::from_raw(raw)?),
+            TX_CALL => Box::new(TxCall::from_raw(raw)?),
             _ => {
                 return Err(encoding::Error::IncorrectMessageType {
                     message_type: raw.message_type(),

@@ -12,3 +12,15 @@ bodyparser = "0.8.0"
 router = "0.6.0"
 serde = "1.0"
 serde_json = "1.0"
+# TODO: move to a separate crate
+reqwest = "0.8.4"
+failure = "0.1"
+clap = "2.29"
+
+[[bin]]
+name = "node"
+path = "src/node.rs"
+
+[[bin]]
+name = "client"
+path = "src/client.rs"
