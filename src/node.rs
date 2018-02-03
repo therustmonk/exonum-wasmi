@@ -9,6 +9,7 @@ extern crate bodyparser;
 extern crate iron;
 extern crate wasmi;
 
+mod messages;
 mod service;
 
 use exonum::blockchain::{GenesisConfig, ValidatorKeys};
@@ -55,9 +56,7 @@ fn main() {
     exonum::helpers::init_logger().unwrap();
     let node = Node::new(
         Box::new(MemoryDB::new()),
-        vec![
-            Box::new(service::WasmService),
-        ],
+        vec![Box::new(service::WasmService)],
         node_config(),
     );
     node.run().unwrap();
