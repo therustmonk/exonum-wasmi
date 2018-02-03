@@ -89,7 +89,7 @@ impl Transaction for TxCall {
         let contract = schema.contract(&self.name().to_string());
         if let Some(contract) = contract {
             let mut storage = schema.storage_mut(self.name());
-            let _ = wasm::execute(contract.module(), "execute_transaction", self.data(), &mut storage);
+            let _ = wasm::execute(contract.module(), self.func(), self.data(), &mut storage);
             // TODO: can we return result here?
         }
     }

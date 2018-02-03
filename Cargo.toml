@@ -16,11 +16,16 @@ serde_json = "1.0"
 reqwest = "0.8.4"
 failure = "0.1"
 clap = "2.29"
+rand = "0.4.2"
 
 [[bin]]
 name = "node"
 path = "src/node.rs"
 
 [[bin]]
-name = "client"
-path = "src/client.rs"
+name = "deploy"
+path = "src/deploy.rs"
+
+[[bin]]
+name = "call"
+path = "src/call.rs"

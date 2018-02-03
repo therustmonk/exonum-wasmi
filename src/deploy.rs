@@ -17,7 +17,7 @@ use messages::*;
 
 fn main() {
     dotenv::dotenv().ok();
-    let matches = App::new("ExoWasm Client")
+    let matches = App::new("ExoWasm deploy")
         .version("1.0")
         .arg(Arg::with_name("INPUT")
              .help("Sets the input file to use")
@@ -34,7 +34,7 @@ fn do_it(file: &str) -> Result<(), Error> {
     let mut module = Vec::new();
     let mut f = File::open(file).expect("file not found");
     f.read_to_end(&mut module)?;
-    let tx_deploy = TxDeploy::new("my-contract", &module, &keypair.1);
+    let tx_deploy = TxDeploy::new("my_contract", &module, &keypair.1);
     let client = reqwest::Client::new();
     let res = client
         .post("http://localhost:8000/api/services/wasmi/contracts/deploy")
