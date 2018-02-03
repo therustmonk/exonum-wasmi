@@ -35,7 +35,7 @@ static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[no_mangle]
 pub fn execute_transaction() {
-    // let args = ext::args();
+    let args = ext::args();
     
     // let inc_by = args[0] as u8;
     // let mut current_value = ext::get_storage(b"counter");
@@ -51,6 +51,7 @@ pub fn execute_transaction() {
     // ext::return_data(Ok(&current_value))
 
     ext::debug(b"hello world!");
+    ext::debug(&args);
 }
 
 #[no_mangle]

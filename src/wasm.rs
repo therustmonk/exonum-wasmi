@@ -4,15 +4,17 @@ use wasmi::{Error, Externals, FuncInstance, FuncRef, ImportsBuilder, MemoryRef, 
 
 const DEBUG_FUNC: usize = 0;
 const ARGS_FUNC: usize = 1;
-const RETURN_DATA_FUNC: usize = 2;
-const SET_STORAGE_FUNC: usize = 3;
-const GET_STORAGE_FUNC: usize = 4;
+const ARGS_LEN_FUNC: usize = 2;
+const RETURN_DATA_FUNC: usize = 3;
+const SET_STORAGE_FUNC: usize = 4;
+const GET_STORAGE_FUNC: usize = 5;
 
-struct Runtime {
+struct Runtime<'a> {
     memory: MemoryRef,
+    args: &'a [u8],
 }
 
-impl Externals for Runtime {
+impl<'a> Externals for Runtime<'a> {
     fn invoke_index(
         &mut self,
         index: usize,
@@ -24,11 +26,22 @@ impl Externals for Runtime {
                 let len: u32 = args.nth(1);
 
                 let mut msg_buf = vec![0u8; len as usize];
-                self.memory.get_into(ptr, &mut msg_buf).expect("Failed to copy msg");
+                self.memory
+                    .get_into(ptr, &mut msg_buf)
+                    .expect("Failed to copy msg");
 
                 let msg = String::from_utf8_lossy(&msg_buf);
                 println!("[wasm]: {}", msg);
 
+                Ok(None)
+            }
+            ARGS_LEN_FUNC => {
+                let len = self.args.len() as u32;
+                Ok(Some(len.into()))
+            },
+            ARGS_FUNC => {
+                let ptr: u32 = args.nth(0);
+                self.memory.set(ptr, self.args).expect("Failed to set args");
                 Ok(None)
             },
             _ => {
@@ -46,7 +59,8 @@ impl RuntimeImportResolver {
 
         let (params, ret_ty): (&[ValueType], Option<ValueType>) = match index {
             DEBUG_FUNC => (&[I32, I32], None),
-            ARGS_FUNC => (&[I32, I32], None),
+            ARGS_FUNC => (&[I32], None),
+            ARGS_LEN_FUNC => (&[], Some(I32)),
             RETURN_DATA_FUNC => (&[I32, I32, I32], None),
             SET_STORAGE_FUNC => (&[I32, I32, I32, I32], None),
             GET_STORAGE_FUNC => (&[I32, I32, I32, I32], None),
@@ -62,6 +76,7 @@ impl ModuleImportResolver for RuntimeImportResolver {
         let index = match field_name {
             "debug" => DEBUG_FUNC,
             "args" => ARGS_FUNC,
+            "args_len" => ARGS_LEN_FUNC,
             "return_data" => RETURN_DATA_FUNC,
             "set_storage" => SET_STORAGE_FUNC,
             "get_storage" => GET_STORAGE_FUNC,
@@ -84,7 +99,7 @@ impl ModuleImportResolver for RuntimeImportResolver {
     }
 }
 
-pub fn execute_wasm(wasm: &[u8], params: &[u8]) -> Vec<u8> {
+pub fn execute_wasm(wasm: &[u8], args: &[u8]) -> Vec<u8> {
     let module = Module::from_buffer(wasm).expect("Can't load wasm");
     let instance = ModuleInstance::new(
         &module,
@@ -98,7 +113,10 @@ pub fn execute_wasm(wasm: &[u8], params: &[u8]) -> Vec<u8> {
         .expect("export 'memory' is not a memory")
         .clone();
 
-    let mut runtime = Runtime { memory };
+    let mut runtime = Runtime { 
+        memory,
+        args,
+    };
 
     let instance = instance
         .run_start(&mut runtime)
@@ -132,6 +150,6 @@ mod tests {
     fn it_works() {
         let wasm_kernel_buf =
             read_file("wasm-kernel/wasm_kernel.wasm").expect("Failed to load wasm-kernel");
-        let result = execute_wasm(&wasm_kernel_buf, &[]);
+        let result = execute_wasm(&wasm_kernel_buf, b"ARGS");
     }
 }
