@@ -11,6 +11,7 @@ extern crate wasmi;
 
 mod messages;
 mod service;
+mod wasm;
 
 use exonum::blockchain::{GenesisConfig, ValidatorKeys};
 use exonum::node::{Node, NodeApiConfig, NodeConfig};
