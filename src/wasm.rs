@@ -12,7 +12,7 @@ const GET_STORAGE_LEN_FUNC: usize = 6;
 
 pub trait Storage {
     fn set(&mut self, key: &[u8], value: &[u8]);
-    fn get(&self, key: &[u8]) -> &[u8];
+    fn get(&self, key: &[u8]) -> Vec<u8>;
 }
 
 struct Runtime<'a> {
@@ -103,7 +103,7 @@ impl<'a> Externals for Runtime<'a> {
 
                 let value = self.storage.get(&key);
                 self.memory
-                    .set(value_ptr, value)
+                    .set(value_ptr, &value)
                     .expect("Failed to write value");
 
                 Ok(None)
@@ -178,7 +178,7 @@ impl ModuleImportResolver for RuntimeImportResolver {
     }
 }
 
-pub fn execute_wasm(wasm: &[u8], func_name: &str, args: &[u8], storage: &mut Storage) -> Vec<u8> {
+pub fn execute(wasm: &[u8], func_name: &str, args: &[u8], storage: &mut Storage) -> Vec<u8> {
     let module = Module::from_buffer(wasm).expect("Can't load wasm");
     let instance = ModuleInstance::new(
         &module,
@@ -211,11 +211,8 @@ pub fn execute_wasm(wasm: &[u8], func_name: &str, args: &[u8], storage: &mut Sto
 
 #[cfg(test)]
 mod tests {
-    use std::path::Path;
-    use std::io;
-    use std::fs::File;
     use std::collections::HashMap;
-    use super::{execute_wasm, Storage};
+    use super::{execute, Storage};
 
     #[derive(Default)]
     struct MockStorage {
@@ -223,8 +220,8 @@ mod tests {
     }
 
     impl Storage for MockStorage {
-        fn get(&self, key: &[u8]) -> &[u8] {
-            self.data.get(key).map(|v| &*v as &[u8]).unwrap_or(&[])
+        fn get(&self, key: &[u8]) -> Vec<u8> {
+            self.data.get(key).cloned().unwrap_or(Vec::new())
         }
 
         fn set(&mut self, key: &[u8], value: &[u8]) {
@@ -236,7 +233,7 @@ mod tests {
 
     #[test]
     fn print_args() {
-        let _ = execute_wasm(
+        let _ = execute(
             WASM_KERNEL,
             "test_print_args",
             b"ARGS",
@@ -246,7 +243,7 @@ mod tests {
 
     #[test]
     fn return_args() {
-        let result = execute_wasm(
+        let result = execute(
             WASM_KERNEL,
             "test_return_args",
             b"ARGS1",
@@ -258,7 +255,7 @@ mod tests {
     #[test]
     fn set_storage() {
         let mut storage = MockStorage::default();
-        let _ = execute_wasm(WASM_KERNEL, "test_set_storage", b"some_key", &mut storage);
+        let _ = execute(WASM_KERNEL, "test_set_storage", b"some_key", &mut storage);
         assert_eq!(storage.get(b"some_key"), b"you found me!");
     }
 
@@ -267,7 +264,7 @@ mod tests {
         let mut storage = MockStorage::default();
         storage.set(b"key", b"value");
 
-        let value = execute_wasm(WASM_KERNEL, "test_get_storage", b"key", &mut storage);
+        let value = execute(WASM_KERNEL, "test_get_storage", b"key", &mut storage);
 
         assert_eq!(&value, b"value");
     }
