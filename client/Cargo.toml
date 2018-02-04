@@ -1,0 +1,13 @@
+[package]
+name = "exowasm-client"
+version = "0.1.0"
+authors = ["Denis Kolodin <denis.kolodin@xdev.re>"]
+
+[dependencies]
+exonum = "0.5.1"
+reqwest = "0.8.4"
+failure = "0.1"
+clap = "2.29"
+serde_json = "1.0"
+rand = "0.4.2"
+exowasm-node = { path = "../node" }

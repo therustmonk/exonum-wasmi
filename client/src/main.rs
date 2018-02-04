@@ -1,12 +1,10 @@
-extern crate dotenv;
-#[macro_use]
 extern crate exonum;
 extern crate reqwest;
 extern crate failure;
 extern crate clap;
 extern crate rand;
-
-pub mod messages;
+extern crate serde_json;
+extern crate exowasm_node;
 
 use std::io::Read;
 use std::fs::File;
@@ -15,11 +13,9 @@ use clap::{Arg, App, SubCommand};
 use exonum::storage::StorageValue;
 use exonum::crypto::gen_keypair;
 use exonum::encoding::serialize::FromHex;
-use messages::*;
-extern crate serde_json;
+use exowasm_node::protocol::*;
 
 fn main() {
-    dotenv::dotenv().ok();
     let app = App::new("ExoWasm call")
         .version("1.0")
         .subcommand(

@@ -10,9 +10,9 @@ use iron::prelude::*;
 use iron::Handler;
 use router::Router;
 use serde::Deserialize;
-use messages::*;
-use exowasm_executor as wasm;
 use serde_json;
+use exowasm_executor as wasm;
+use protocol::*;
 
 // // // // // // // // // // PERSISTENT DATA // // // // // // // // // //
 
