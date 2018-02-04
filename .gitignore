@@ -4,3 +4,4 @@ wasm-kernel/target
 exowasm-std/target
 test/wasm-kernel/target
 test/target
+exowasm-executor/target

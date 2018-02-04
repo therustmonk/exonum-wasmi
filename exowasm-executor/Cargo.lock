@@ -21,14 +21,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "exowasm-test"
-version = "0.1.0"
-dependencies = [
- "exowasm-executor 0.1.0",
- "parity-wasm 0.23.0 (registry+https://github.com/rust-lang/crates.io-index)",
-]
-
-[[package]]
 name = "fuchsia-zircon"
 version = "0.3.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"

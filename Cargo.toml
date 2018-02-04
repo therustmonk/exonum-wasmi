@@ -6,7 +6,6 @@ authors = ["Denis Kolodin <denis.kolodin@xdev.re>"]
 [dependencies]
 dotenv = "0.10.1"
 exonum = "0.5.1"
-wasmi = { git = "https://github.com/pepyakin/wasmi" }
 iron = "0.6.0"
 bodyparser = "0.8.0"
 router = "0.6.0"
@@ -18,6 +17,7 @@ reqwest = "0.8.4"
 failure = "0.1"
 clap = "2.29"
 rand = "0.4.2"
+exowasm-executor = { path = "./exowasm-executor" }
 
 [[bin]]
 name = "node"

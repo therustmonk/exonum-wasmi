@@ -9,11 +9,10 @@ extern crate exonum;
 extern crate router;
 extern crate bodyparser;
 extern crate iron;
-extern crate wasmi;
+extern crate exowasm_executor;
 
 mod messages;
 mod service;
-mod wasm;
 
 use exonum::blockchain::{GenesisConfig, ValidatorKeys};
 use exonum::node::{Node, NodeApiConfig, NodeConfig};

@@ -11,7 +11,7 @@ use iron::Handler;
 use router::Router;
 use serde::Deserialize;
 use messages::*;
-use wasm;
+use exowasm_executor as wasm;
 use serde_json;
 
 // // // // // // // // // // PERSISTENT DATA // // // // // // // // // //
@@ -41,9 +41,11 @@ impl<T: AsRef<Snapshot>> WasmSchema<T> {
         self.contracts().get(name)
     }
 
-    pub fn storage(&self, name: &str) -> MapIndex<&Snapshot, Vec<u8>, Vec<u8>> {
+    pub fn storage(&self, name: &str) -> WasmContractStorage<&Snapshot> {
         let storage_key = format!("wasmi.storage.{}", name);
-        MapIndex::new(&storage_key, self.view.as_ref())
+        WasmContractStorage {
+            view: MapIndex::new(&storage_key, self.view.as_ref())
+        }
     }
 }
 
@@ -52,25 +54,31 @@ impl<'a> WasmSchema<&'a mut Fork> {
         MapIndex::new("wasmi.contracts", &mut self.view)
     }
 
-    pub fn storage_mut(&mut self, name: &str) -> MapIndex<&mut Fork, Vec<u8>, Vec<u8>> {
+    pub fn storage_mut(&mut self, name: &str) -> WasmContractStorage<&mut Fork> {
         let storage_key = format!("wasmi.storage.{}", name);
-        MapIndex::new(&storage_key, &mut self.view)
+        WasmContractStorage {
+            view: MapIndex::new(&storage_key, &mut self.view)
+        }
     }
 }
 
-impl<'a> wasm::Storage for MapIndex<&'a mut Fork, Vec<u8>, Vec<u8>> {
+pub struct WasmContractStorage<T> {
+    view: MapIndex<T, Vec<u8>, Vec<u8>>
+}
+
+impl<'a> wasm::Storage for WasmContractStorage<&'a mut Fork> {
     fn get(&self, key: &[u8]) -> Vec<u8> {
-        MapIndex::get(self, &key.to_vec()).unwrap_or(Vec::new())
+        MapIndex::get(&self.view, &key.to_vec()).unwrap_or(Vec::new())
     }
 
     fn set(&mut self, key: &[u8], value: &[u8]) {
-        MapIndex::put(self, &key.to_vec(), value.to_vec())
+        MapIndex::put(&mut self.view, &key.to_vec(), value.to_vec())
     }
 }
 
-impl<'a> wasm::Storage for MapIndex<&'a Snapshot, Vec<u8>, Vec<u8>> {
+impl<'a> wasm::Storage for WasmContractStorage<&'a Snapshot> {
     fn get(&self, key: &[u8]) -> Vec<u8> {
-        MapIndex::get(self, &key.to_vec()).unwrap_or(Vec::new())
+        MapIndex::get(&self.view, &key.to_vec()).unwrap_or(Vec::new())
     }
 
     fn set(&mut self, _key: &[u8], _value: &[u8]) {
