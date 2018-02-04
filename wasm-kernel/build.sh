@@ -1,6 +1,8 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
-set -xe
+set -eux
+
+cd $(dirname $0)
 
 # We need --release since debug version at the moment doesn't work properly.
 RUSTFLAGS="-g" cargo build --release --target wasm32-unknown-unknown
@@ -16,3 +18,5 @@ wasm2wat \
     -f \
     -o ./wasm_kernel.wat \
     ./wasm_kernel.wasm
+
+cd -

@@ -1,13 +1,7 @@
 
 use alloc::Vec;
-use core::ptr;
-
-enum Void {
-}
 
 mod ffi {
-    use super::Void;
-
     extern "C" {
         pub fn debug(msg_ptr: *const u8, msg_len: usize);
 
@@ -37,31 +31,6 @@ mod ffi {
             value_ptr: *const u8,
         );
     }
-}
-
-#[inline(always)]
-unsafe fn wrap_closure<F>(f: &F) -> (extern "C" fn(*mut Void, usize) -> *mut u8, *mut Void)
-where
-    F: FnOnce(usize) -> *mut u8,
-{
-    extern "C" fn wrapper<F>(closure_ptr: *mut Void, size: usize) -> *mut u8
-    where
-        F: FnOnce(usize) -> *mut u8,
-    {
-        let opt_closure = closure_ptr as *mut Option<F>;
-        unsafe { (*opt_closure).take().unwrap()(size) }
-    }
-
-    let closure_data = f as *const _ as *mut Void;
-    (wrapper::<F>, closure_data)
-}
-
-fn reserve_vec_space(vec: &mut Vec<u8>, size: usize) -> *mut u8 {
-    *vec = Vec::with_capacity(size);
-    unsafe {
-        vec.set_len(size);
-    }
-    vec.as_mut_ptr()
 }
 
 /// Print debug message to the console.
