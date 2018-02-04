@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 
 pub const SERVICE_ID: u16 = 1;
 

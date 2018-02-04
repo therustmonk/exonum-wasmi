@@ -64,7 +64,7 @@ pub struct WasmContractStorage<T> {
 
 impl<'a> wasm::Storage for WasmContractStorage<&'a mut Fork> {
     fn get(&self, key: &[u8]) -> Vec<u8> {
-        MapIndex::get(&self.view, &key.to_vec()).unwrap_or(Vec::new())
+        MapIndex::get(&self.view, &key.to_vec()).unwrap_or_default()
     }
 
     fn set(&mut self, key: &[u8], value: &[u8]) {
@@ -74,7 +74,7 @@ impl<'a> wasm::Storage for WasmContractStorage<&'a mut Fork> {
 
 impl<'a> wasm::Storage for WasmContractStorage<&'a Snapshot> {
     fn get(&self, key: &[u8]) -> Vec<u8> {
-        MapIndex::get(&self.view, &key.to_vec()).unwrap_or(Vec::new())
+        MapIndex::get(&self.view, &key.to_vec()).unwrap_or_default()
     }
 
     fn set(&mut self, _key: &[u8], _value: &[u8]) {
@@ -144,7 +144,7 @@ impl WasmServiceApi {
             TX_DEPLOY => Box::new(TxDeploy::from_raw(raw).unwrap()),
             TX_CALL => Box::new(TxCall::from_raw(raw).unwrap()),
             id => {
-                panic!("wrong transaction type: {}", id);
+                panic!("wrong transaction type: {}", id)
             }
         };
         let tx_hash = transaction.hash();
