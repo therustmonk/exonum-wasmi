@@ -3,4 +3,6 @@
 set -eux
 
 cargo test --verbose
-cargo test --verbose --manifest-path=test/Cargo.toml
+
+# Execute wasm tests.
+cargo test --verbose --manifest-path=exowasm-executor-test/Cargo.toml

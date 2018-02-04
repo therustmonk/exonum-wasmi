@@ -21,7 +21,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "exowasm-test"
+name = "exowasm-executor-test"
 version = "0.1.0"
 dependencies = [
  "exowasm-executor 0.1.0",

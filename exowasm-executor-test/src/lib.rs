@@ -2,7 +2,10 @@ extern crate exowasm_executor;
 
 #[cfg(test)]
 mod tests {
-    const WASM_KERNEL: &'static [u8] = include_bytes!(concat!(env!("OUT_DIR"), "/wasm_kernel.wasm"));
+    // Include wasm_kernel.wasm. It's wasm binary which contains all tests.
+    // See build.rs to see how it is built.
+    const WASM_KERNEL: &'static [u8] =
+        include_bytes!(concat!(env!("OUT_DIR"), "/wasm_kernel.wasm"));
 
     use std::collections::HashMap;
     use exowasm_executor::{execute, Storage};

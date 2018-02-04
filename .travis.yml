@@ -3,6 +3,7 @@ rust:
 - nightly
 install:
 - rustup target add wasm32-unknown-unknown
+# This will install latest wasm tools.
 - source ./ci/install_wasm.sh
 script:
 - ./build.sh
