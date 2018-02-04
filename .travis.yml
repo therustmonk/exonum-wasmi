@@ -5,5 +5,5 @@ install:
 - rustup target add wasm32-unknown-unknown
 - source ./ci/install_wasm.sh
 script:
-- ./wasm-kernel/build.sh
-- cargo test --verbose
+- ./build.sh
+- ./test.sh
