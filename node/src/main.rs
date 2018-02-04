@@ -1,22 +1,13 @@
 extern crate dotenv;
 #[macro_use]
 extern crate log;
-extern crate serde;
-#[macro_use]
-extern crate serde_json;
-#[macro_use]
 extern crate exonum;
-extern crate router;
-extern crate bodyparser;
-extern crate iron;
-extern crate exowasm_executor;
-
-mod messages;
-mod service;
+extern crate exowasm_node;
 
 use exonum::blockchain::{GenesisConfig, ValidatorKeys};
 use exonum::node::{Node, NodeApiConfig, NodeConfig};
 use exonum::storage::MemoryDB;
+use exowasm_node::service;
 
 fn node_config() -> NodeConfig {
     let (consensus_public_key, consensus_secret_key) = exonum::crypto::gen_keypair();

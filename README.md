@@ -1,25 +1,35 @@
 # Exonum + Wasmi
 
+To build the project use:
+
+```
+cargo build --all
+```
+
+When the project is build all necessary binaries placed to `./target/debug` directory.
+
+
 To run the node use:
 
 ```
-cargo run --bin node
+exowasm-node
 ```
+
 
 To deploy the test kernel:
 
 ```
-cargo run --bin client -- deploy wasm_kernel wasm-kernel/wasm_kernel.wasm
+exowasm-client deploy cryptocurrency cryptocurrency/cryptocurrency.wasm
 ```
 
 To call simple test you can run the following command
 
 ```
-cargo run --bin client -- call wasm_kernel test_counter
+exowasm-client call cryptocurrency create_wallet
 ```
 
 If you need to pass arguments to wasm you can pass it in HEX like:
 
 ```
-cargo run --bin client -- call wasm_kernel test_return_args 4045
+exowasm-client call cryptocurrency create_wallet 4045
 ```
