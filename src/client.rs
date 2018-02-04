@@ -24,47 +24,65 @@ fn main() {
         .version("1.0")
         .subcommand(
             SubCommand::with_name("call")
-                .about("Make a transaction to contract (i.e make changes to the state)")
-                .arg(Arg::with_name("NAME")
-                    .help("name of the contract to run")
-                    .required(true)
-                    .index(1))
-                .arg(Arg::with_name("FUNC")
-                    .help("func to invoke in contract")
-                    .required(false)
-                    .index(2))
-                .arg(Arg::with_name("DATA")
-                    .help("data to pass as argument to contract (in HEX)")
-                    .required(false)
-                    .index(3))
+                .about(
+                    "Make a transaction to contract (i.e make changes to the state)",
+                )
+                .arg(
+                    Arg::with_name("NAME")
+                        .help("name of the contract to run")
+                        .required(true)
+                        .index(1),
+                )
+                .arg(
+                    Arg::with_name("FUNC")
+                        .help("func to invoke in contract")
+                        .required(false)
+                        .index(2),
+                )
+                .arg(
+                    Arg::with_name("DATA")
+                        .help("data to pass as argument to contract (in HEX)")
+                        .required(false)
+                        .index(3),
+                ),
         )
         .subcommand(
             SubCommand::with_name("query")
                 .about("Make a query to contract (i.e just read the state)")
-                .arg(Arg::with_name("NAME")
-                    .help("name of the contract to query")
-                    .required(true)
-                    .index(1))
-                .arg(Arg::with_name("FUNC")
-                    .help("func to invoke in contract")
-                    .required(false)
-                    .index(2))
-                .arg(Arg::with_name("DATA")
-                    .help("data to pass as argument to contract (in HEX)")
-                    .required(false)
-                    .index(3))
+                .arg(
+                    Arg::with_name("NAME")
+                        .help("name of the contract to query")
+                        .required(true)
+                        .index(1),
+                )
+                .arg(
+                    Arg::with_name("FUNC")
+                        .help("func to invoke in contract")
+                        .required(false)
+                        .index(2),
+                )
+                .arg(
+                    Arg::with_name("DATA")
+                        .help("data to pass as argument to contract (in HEX)")
+                        .required(false)
+                        .index(3),
+                ),
         )
         .subcommand(
             SubCommand::with_name("deploy")
                 .about("Deploy contract on blockchain")
-                .arg(Arg::with_name("NAME")
-                    .help("name of the contract to deploy")
-                    .required(true)
-                    .index(1))
-                .arg(Arg::with_name("INPUT")
-                    .help("Sets the input file to use")
-                    .required(true)
-                    .index(2))
+                .arg(
+                    Arg::with_name("NAME")
+                        .help("name of the contract to deploy")
+                        .required(true)
+                        .index(1),
+                )
+                .arg(
+                    Arg::with_name("INPUT")
+                        .help("Sets the input file to use")
+                        .required(true)
+                        .index(2),
+                ),
         );
 
     let matches = app.get_matches();
@@ -73,13 +91,15 @@ fn main() {
         ("call", Some(matches)) => {
             let contract_name = matches.value_of("NAME").unwrap();
             let func_name = matches.value_of("FUNC").unwrap();
-            let call_data = Vec::from_hex(matches.value_of("DATA").unwrap_or("".into())).expect("Data is not valid hex");;
+            let call_data = Vec::from_hex(matches.value_of("DATA").unwrap_or("".into()))
+                .expect("Data is not valid hex");
             call(contract_name, func_name, &call_data).unwrap();
         }
         ("query", Some(matches)) => {
             let contract_name = matches.value_of("NAME").unwrap();
             let func_name = matches.value_of("FUNC").unwrap();
-            let call_data = Vec::from_hex(matches.value_of("DATA").unwrap_or("".into())).expect("Data is not valid hex");;
+            let call_data = Vec::from_hex(matches.value_of("DATA").unwrap_or("".into()))
+                .expect("Data is not valid hex");
             query(contract_name, func_name, &call_data).unwrap();
         }
         ("deploy", Some(matches)) => {
@@ -87,7 +107,7 @@ fn main() {
             let file = matches.value_of("INPUT").unwrap();
             deploy(contract_name, file).unwrap();
         }
-        _ => { }
+        _ => {}
     }
 }
 

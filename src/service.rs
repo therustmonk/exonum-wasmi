@@ -43,9 +43,7 @@ impl<T: AsRef<Snapshot>> WasmSchema<T> {
 
     pub fn storage(&self, name: &str) -> WasmContractStorage<&Snapshot> {
         let storage_key = format!("wasmi.storage.{}", name);
-        WasmContractStorage {
-            view: MapIndex::new(&storage_key, self.view.as_ref())
-        }
+        WasmContractStorage { view: MapIndex::new(&storage_key, self.view.as_ref()) }
     }
 }
 
@@ -56,14 +54,12 @@ impl<'a> WasmSchema<&'a mut Fork> {
 
     pub fn storage_mut(&mut self, name: &str) -> WasmContractStorage<&mut Fork> {
         let storage_key = format!("wasmi.storage.{}", name);
-        WasmContractStorage {
-            view: MapIndex::new(&storage_key, &mut self.view)
-        }
+        WasmContractStorage { view: MapIndex::new(&storage_key, &mut self.view) }
     }
 }
 
 pub struct WasmContractStorage<T> {
-    view: MapIndex<T, Vec<u8>, Vec<u8>>
+    view: MapIndex<T, Vec<u8>, Vec<u8>>,
 }
 
 impl<'a> wasm::Storage for WasmContractStorage<&'a mut Fork> {
@@ -114,7 +110,11 @@ impl Transaction for TxCall {
         let mut schema = WasmSchema::new(view);
         let contract = schema.contract(&self.name().to_string());
         if let Some(contract) = contract {
-            info!("The contract found and calling with a data: {} ( {:?} )", self.func(), self.data());
+            info!(
+                "The contract found and calling with a data: {} ( {:?} )",
+                self.func(),
+                self.data()
+            );
             let mut storage = schema.storage_mut(self.name());
             let _ = wasm::execute(contract.module(), self.func(), self.data(), &mut storage);
             // TODO: can we return result here?

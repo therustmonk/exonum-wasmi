@@ -23,14 +23,17 @@ fn main() {
 
     for section in wasm_kernel_module.sections_mut() {
         if let &mut Section::Export(ref mut section) = section {
-            section
-                .entries_mut()
-                .push(ExportEntry::new("table".to_owned(), Internal::Table(0)));
+            section.entries_mut().push(ExportEntry::new(
+                "table".to_owned(),
+                Internal::Table(0),
+            ));
         }
     }
     // TODO: generate export section if there is none.
 
-    let out_dir = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR env variable isn't defined"));
+    let out_dir = PathBuf::from(env::var("OUT_DIR").expect(
+        "OUT_DIR env variable isn't defined",
+    ));
     let mut result_wasm = out_dir;
     result_wasm.push("wasm_kernel.wasm");
 

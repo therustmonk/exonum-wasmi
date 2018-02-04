@@ -8,10 +8,7 @@ mod ffi {
         pub fn args(ptr: *mut u8);
         pub fn args_len() -> usize;
 
-        pub fn return_data(
-            value_ptr: *const u8,
-            value_len: usize,
-        );
+        pub fn return_data(value_ptr: *const u8, value_len: usize);
 
         pub fn set_storage(
             key_ptr: *const u8,
@@ -20,26 +17,16 @@ mod ffi {
             value_len: usize,
         );
 
-        pub fn get_storage_len(
-            key_ptr: *const u8,
-            key_len: usize,
-        ) -> usize;
+        pub fn get_storage_len(key_ptr: *const u8, key_len: usize) -> usize;
 
-        pub fn get_storage(
-            key_ptr: *const u8,
-            key_len: usize,
-            value_ptr: *const u8,
-        );
+        pub fn get_storage(key_ptr: *const u8, key_len: usize, value_ptr: *const u8);
     }
 }
 
 /// Print debug message to the console.
 pub fn debug(msg: &[u8]) {
     unsafe {
-        ffi::debug(
-            msg.as_ptr(),
-            msg.len()
-        );
+        ffi::debug(msg.as_ptr(), msg.len());
     }
 }
 
@@ -63,30 +50,16 @@ pub fn return_data(value: &[u8]) {
 /// Load value from key-value storage.
 pub fn get_storage(key: &[u8]) -> Vec<u8> {
     unsafe {
-        let value_len = ffi::get_storage_len(
-            key.as_ptr(),
-            key.len(),
-        );
+        let value_len = ffi::get_storage_len(key.as_ptr(), key.len());
         let mut value = vec![0u8; value_len];
-        ffi::get_storage(
-            key.as_ptr(),
-            key.len(),
-            value.as_mut_ptr(),
-        );
-        value   
+        ffi::get_storage(key.as_ptr(), key.len(), value.as_mut_ptr());
+        value
     }
 }
 
 /// Storage value to key-value storage.
 pub fn set_storage(key: &[u8], value: &[u8]) {
-   unsafe {
-       ffi::set_storage(
-           key.as_ptr(),
-           key.len(),
-           value.as_ptr(),
-           value.len(),
-       );
-   }
+    unsafe {
+        ffi::set_storage(key.as_ptr(), key.len(), value.as_ptr(), value.len());
+    }
 }
-
-

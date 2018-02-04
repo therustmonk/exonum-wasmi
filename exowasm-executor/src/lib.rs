@@ -42,9 +42,9 @@ impl<'a> Externals for Runtime<'a> {
                 let len: u32 = args.nth(1);
 
                 let mut msg_buf = vec![0u8; len as usize];
-                self.memory
-                    .get_into(ptr, &mut msg_buf)
-                    .expect("Failed to copy msg");
+                self.memory.get_into(ptr, &mut msg_buf).expect(
+                    "Failed to copy msg",
+                );
 
                 let msg = String::from_utf8_lossy(&msg_buf);
                 println!("[wasm]: {}", msg);
@@ -65,9 +65,9 @@ impl<'a> Externals for Runtime<'a> {
                 let len: u32 = args.nth(1);
 
                 let mut return_data = vec![0u8; len as usize];
-                self.memory
-                    .get_into(ptr, &mut return_data)
-                    .expect("Failed to copy return buf");
+                self.memory.get_into(ptr, &mut return_data).expect(
+                    "Failed to copy return buf",
+                );
 
                 self.return_data = return_data;
 
@@ -82,12 +82,12 @@ impl<'a> Externals for Runtime<'a> {
                 let mut key = vec![0u8; key_len as usize];
                 let mut value = vec![0u8; value_len as usize];
 
-                self.memory
-                    .get_into(key_ptr, &mut key)
-                    .expect("Failed to read key");
-                self.memory
-                    .get_into(value_ptr, &mut value)
-                    .expect("Failed to read value");
+                self.memory.get_into(key_ptr, &mut key).expect(
+                    "Failed to read key",
+                );
+                self.memory.get_into(value_ptr, &mut value).expect(
+                    "Failed to read value",
+                );
 
                 self.storage.set(&key, &value);
 
@@ -99,14 +99,14 @@ impl<'a> Externals for Runtime<'a> {
                 let value_ptr: u32 = args.nth(2);
 
                 let mut key = vec![0u8; key_len as usize];
-                self.memory
-                    .get_into(key_ptr, &mut key)
-                    .expect("Failed to read key");
+                self.memory.get_into(key_ptr, &mut key).expect(
+                    "Failed to read key",
+                );
 
                 let value = self.storage.get(&key);
-                self.memory
-                    .set(value_ptr, &value)
-                    .expect("Failed to write value");
+                self.memory.set(value_ptr, &value).expect(
+                    "Failed to write value",
+                );
 
                 Ok(None)
             }
@@ -115,9 +115,9 @@ impl<'a> Externals for Runtime<'a> {
                 let key_len: u32 = args.nth(1);
 
                 let mut key = vec![0u8; key_len as usize];
-                self.memory
-                    .get_into(key_ptr, &mut key)
-                    .expect("Failed to read key");
+                self.memory.get_into(key_ptr, &mut key).expect(
+                    "Failed to read key",
+                );
 
                 let len = self.storage.get(&key).len() as u32;
 
@@ -162,18 +162,16 @@ impl ModuleImportResolver for RuntimeImportResolver {
             "get_storage" => GET_STORAGE_FUNC,
             "get_storage_len" => GET_STORAGE_LEN_FUNC,
             _ => {
-                return Err(Error::Instantiation(format!(
-                    "Export {} not found",
-                    field_name
-                )));
+                return Err(Error::Instantiation(
+                    format!("Export {} not found", field_name),
+                ));
             }
         };
 
         if !RuntimeImportResolver::check_signature(index, signature) {
-            return Err(Error::Instantiation(format!(
-                "Signature mismatch for function {}",
-                field_name
-            )));
+            return Err(Error::Instantiation(
+                format!("Signature mismatch for function {}", field_name),
+            ));
         }
 
         Ok(FuncInstance::alloc_host(signature.clone(), index))
@@ -201,9 +199,9 @@ pub fn execute(wasm: &[u8], func_name: &str, args: &[u8], storage: &mut Storage)
         storage,
     };
 
-    let instance = instance
-        .run_start(&mut runtime)
-        .expect("Failed to run `start` function");
+    let instance = instance.run_start(&mut runtime).expect(
+        "Failed to run `start` function",
+    );
     let _ = instance
         .invoke_export(func_name, &[], &mut runtime)
         .unwrap();
