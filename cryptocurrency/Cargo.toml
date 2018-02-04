@@ -1,0 +1,15 @@
+[package]
+name = "cryptocurrency"
+version = "0.1.0"
+authors = ["Sergey Pepyakin <s.pepyakin@gmail.com>"]
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+exowasm-std = { path = "../exowasm-std" }
+byteorder = { version = "1", default-features = false }
+
+[profile.release]
+panic = "abort"
+lto = true

@@ -7,3 +7,4 @@ test/target
 exowasm-executor/target
 exowasm-executor-test/wasm-kernel/target
 exowasm-executor-test/target
+cryptocurrency/target
