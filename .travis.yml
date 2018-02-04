@@ -1,0 +1,7 @@
+language: rust
+rust:
+- nightly
+install:
+- rustup target add wasm32-unknown-unknown
+script:
+- cargo test --verbose
