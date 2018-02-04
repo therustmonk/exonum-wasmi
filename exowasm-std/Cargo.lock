@@ -1,7 +1,10 @@
 [[package]]
-name = "byteorder"
-version = "1.2.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
+name = "exowasm-std"
+version = "0.1.0"
+dependencies = [
+ "rlibc 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "wee_alloc 0.1.0 (git+https://github.com/fitzgen/wee_alloc.git?rev=05d369a)",
+]
 
 [[package]]
 name = "libc"
@@ -14,15 +17,6 @@ version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
-name = "wasm-kernel"
-version = "0.1.0"
-dependencies = [
- "byteorder 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
- "rlibc 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)",
- "wee_alloc 0.1.0 (git+https://github.com/fitzgen/wee_alloc.git?rev=05d369a)",
-]
-
-[[package]]
 name = "wee_alloc"
 version = "0.1.0"
 source = "git+https://github.com/fitzgen/wee_alloc.git?rev=05d369a#05d369ac22bf3b2bc76099db83ec3caf0b77faae"
@@ -31,7 +25,6 @@ dependencies = [
 ]
 
 [metadata]
-"checksum byteorder 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "652805b7e73fada9d85e9a6682a4abd490cb52d96aeecc12e33a0de34dfd0d23"
 "checksum libc 0.2.36 (registry+https://github.com/rust-lang/crates.io-index)" = "1e5d97d6708edaa407429faa671b942dc0f2727222fb6b6539bf1db936e4b121"
 "checksum rlibc 1.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "fc874b127765f014d792f16763a81245ab80500e2ad921ed4ee9e82481ee08fe"
 "checksum wee_alloc 0.1.0 (git+https://github.com/fitzgen/wee_alloc.git?rev=05d369a)" = "<none>"

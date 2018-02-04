@@ -330,6 +330,7 @@ dependencies = [
  "clap 2.29.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "dotenv 0.10.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "exonum 0.5.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "exowasm-executor 0.1.0",
  "failure 0.1.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "iron 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
@@ -338,7 +339,6 @@ dependencies = [
  "router 0.6.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_json 1.0.9 (registry+https://github.com/rust-lang/crates.io-index)",
- "wasmi 0.0.0 (git+https://github.com/pepyakin/wasmi)",
 ]
 
 [[package]]
@@ -395,6 +395,13 @@ dependencies = [
  "exonum_libsodium-sys 0.0.16 (registry+https://github.com/rust-lang/crates.io-index)",
  "libc 0.2.36 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "exowasm-executor"
+version = "0.1.0"
+dependencies = [
+ "wasmi 0.0.0 (git+https://github.com/pepyakin/wasmi)",
 ]
 
 [[package]]

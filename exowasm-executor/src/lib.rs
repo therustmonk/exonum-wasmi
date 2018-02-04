@@ -1,3 +1,5 @@
+extern crate wasmi;
+
 use wasmi::{Error, Externals, FuncInstance, FuncRef, ImportsBuilder, MemoryRef, Module,
             ModuleImportResolver, ModuleInstance, RuntimeArgs, RuntimeValue, Signature, Trap,
             ValueType};
@@ -40,9 +42,9 @@ impl<'a> Externals for Runtime<'a> {
                 let len: u32 = args.nth(1);
 
                 let mut msg_buf = vec![0u8; len as usize];
-                self.memory
-                    .get_into(ptr, &mut msg_buf)
-                    .expect("Failed to copy msg");
+                self.memory.get_into(ptr, &mut msg_buf).expect(
+                    "Failed to copy msg",
+                );
 
                 let msg = String::from_utf8_lossy(&msg_buf);
                 println!("[wasm]: {}", msg);
@@ -63,9 +65,9 @@ impl<'a> Externals for Runtime<'a> {
                 let len: u32 = args.nth(1);
 
                 let mut return_data = vec![0u8; len as usize];
-                self.memory
-                    .get_into(ptr, &mut return_data)
-                    .expect("Failed to copy return buf");
+                self.memory.get_into(ptr, &mut return_data).expect(
+                    "Failed to copy return buf",
+                );
 
                 self.return_data = return_data;
 
@@ -80,12 +82,12 @@ impl<'a> Externals for Runtime<'a> {
                 let mut key = vec![0u8; key_len as usize];
                 let mut value = vec![0u8; value_len as usize];
 
-                self.memory
-                    .get_into(key_ptr, &mut key)
-                    .expect("Failed to read key");
-                self.memory
-                    .get_into(value_ptr, &mut value)
-                    .expect("Failed to read value");
+                self.memory.get_into(key_ptr, &mut key).expect(
+                    "Failed to read key",
+                );
+                self.memory.get_into(value_ptr, &mut value).expect(
+                    "Failed to read value",
+                );
 
                 self.storage.set(&key, &value);
 
@@ -97,14 +99,14 @@ impl<'a> Externals for Runtime<'a> {
                 let value_ptr: u32 = args.nth(2);
 
                 let mut key = vec![0u8; key_len as usize];
-                self.memory
-                    .get_into(key_ptr, &mut key)
-                    .expect("Failed to read key");
+                self.memory.get_into(key_ptr, &mut key).expect(
+                    "Failed to read key",
+                );
 
                 let value = self.storage.get(&key);
-                self.memory
-                    .set(value_ptr, &value)
-                    .expect("Failed to write value");
+                self.memory.set(value_ptr, &value).expect(
+                    "Failed to write value",
+                );
 
                 Ok(None)
             }
@@ -113,9 +115,9 @@ impl<'a> Externals for Runtime<'a> {
                 let key_len: u32 = args.nth(1);
 
                 let mut key = vec![0u8; key_len as usize];
-                self.memory
-                    .get_into(key_ptr, &mut key)
-                    .expect("Failed to read key");
+                self.memory.get_into(key_ptr, &mut key).expect(
+                    "Failed to read key",
+                );
 
                 let len = self.storage.get(&key).len() as u32;
 
@@ -160,18 +162,16 @@ impl ModuleImportResolver for RuntimeImportResolver {
             "get_storage" => GET_STORAGE_FUNC,
             "get_storage_len" => GET_STORAGE_LEN_FUNC,
             _ => {
-                return Err(Error::Instantiation(format!(
-                    "Export {} not found",
-                    field_name
-                )));
+                return Err(Error::Instantiation(
+                    format!("Export {} not found", field_name),
+                ));
             }
         };
 
         if !RuntimeImportResolver::check_signature(index, signature) {
-            return Err(Error::Instantiation(format!(
-                "Signature mismatch for function {}",
-                field_name
-            )));
+            return Err(Error::Instantiation(
+                format!("Signature mismatch for function {}", field_name),
+            ));
         }
 
         Ok(FuncInstance::alloc_host(signature.clone(), index))
@@ -199,73 +199,12 @@ pub fn execute(wasm: &[u8], func_name: &str, args: &[u8], storage: &mut Storage)
         storage,
     };
 
-    let instance = instance
-        .run_start(&mut runtime)
-        .expect("Failed to run `start` function");
+    let instance = instance.run_start(&mut runtime).expect(
+        "Failed to run `start` function",
+    );
     let _ = instance
         .invoke_export(func_name, &[], &mut runtime)
         .unwrap();
 
     runtime.into_return_data()
-}
-
-#[cfg(test)]
-mod tests {
-    use std::collections::HashMap;
-    use super::{execute, Storage};
-
-    #[derive(Default)]
-    struct MockStorage {
-        data: HashMap<Vec<u8>, Vec<u8>>,
-    }
-
-    impl Storage for MockStorage {
-        fn get(&self, key: &[u8]) -> Vec<u8> {
-            self.data.get(key).cloned().unwrap_or(Vec::new())
-        }
-
-        fn set(&mut self, key: &[u8], value: &[u8]) {
-            self.data.insert(key.to_vec(), value.to_vec());
-        }
-    }
-
-    const WASM_KERNEL: &'static [u8] = include_bytes!("../wasm-kernel/wasm_kernel.wasm");
-
-    #[test]
-    fn print_args() {
-        let _ = execute(
-            WASM_KERNEL,
-            "test_print_args",
-            b"ARGS",
-            &mut MockStorage::default(),
-        );
-    }
-
-    #[test]
-    fn return_args() {
-        let result = execute(
-            WASM_KERNEL,
-            "test_return_args",
-            b"ARGS1",
-            &mut MockStorage::default(),
-        );
-        assert_eq!(&result, b"ARGS1");
-    }
-
-    #[test]
-    fn set_storage() {
-        let mut storage = MockStorage::default();
-        let _ = execute(WASM_KERNEL, "test_set_storage", b"some_key", &mut storage);
-        assert_eq!(storage.get(b"some_key"), b"you found me!");
-    }
-
-    #[test]
-    fn get_storage() {
-        let mut storage = MockStorage::default();
-        storage.set(b"key", b"value");
-
-        let value = execute(WASM_KERNEL, "test_get_storage", b"key", &mut storage);
-
-        assert_eq!(&value, b"value");
-    }
 }

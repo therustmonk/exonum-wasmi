@@ -1,0 +1,10 @@
+[package]
+name = "exowasm-executor-test"
+version = "0.1.0"
+authors = ["Sergey Pepyakin <s.pepyakin@gmail.com>"]
+
+[dependencies]
+exowasm-executor = { path = "../exowasm-executor", version = "0.1.0" }
+
+[build-dependencies]
+parity-wasm = "0.23.0"
