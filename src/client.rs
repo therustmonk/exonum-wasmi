@@ -91,14 +91,14 @@ fn main() {
         ("call", Some(matches)) => {
             let contract_name = matches.value_of("NAME").unwrap();
             let func_name = matches.value_of("FUNC").unwrap();
-            let call_data = Vec::from_hex(matches.value_of("DATA").unwrap_or("".into()))
+            let call_data = Vec::from_hex(matches.value_of("DATA").unwrap_or(""))
                 .expect("Data is not valid hex");
             call(contract_name, func_name, &call_data).unwrap();
         }
         ("query", Some(matches)) => {
             let contract_name = matches.value_of("NAME").unwrap();
             let func_name = matches.value_of("FUNC").unwrap();
-            let call_data = Vec::from_hex(matches.value_of("DATA").unwrap_or("".into()))
+            let call_data = Vec::from_hex(matches.value_of("DATA").unwrap_or(""))
                 .expect("Data is not valid hex");
             query(contract_name, func_name, &call_data).unwrap();
         }
