@@ -7,7 +7,7 @@ authors = ["Sergey Pepyakin <s.pepyakin@gmail.com>"]
 crate-type = ["cdylib"]
 
 [dependencies]
-exowasm-std = { path = "../exowasm-std" }
+exowasm-std = { path = "../../exowasm-std" }
 byteorder = { version = "1", default-features = false }
 
 [profile.release]

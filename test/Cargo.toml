@@ -1,0 +1,9 @@
+[package]
+name = "exowasm-test"
+version = "0.1.0"
+authors = ["Sergey Pepyakin <s.pepyakin@gmail.com>"]
+
+[dependencies]
+
+[build-dependencies]
+parity-wasm = "0.23.0"
