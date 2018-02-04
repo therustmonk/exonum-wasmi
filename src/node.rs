@@ -1,4 +1,6 @@
 extern crate dotenv;
+#[macro_use]
+extern crate log;
 extern crate serde;
 #[macro_use]
 extern crate serde_json;
@@ -55,6 +57,7 @@ fn node_config() -> NodeConfig {
 fn main() {
     dotenv::dotenv().ok();
     exonum::helpers::init_logger().unwrap();
+    info!("Starting exonum-wasm node");
     let node = Node::new(
         Box::new(MemoryDB::new()),
         vec![Box::new(service::WasmService)],

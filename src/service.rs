@@ -44,7 +44,7 @@ impl<T: AsRef<Snapshot>> WasmSchema<T> {
     pub fn storage(&self, name: &str) -> MapIndex<&Snapshot, Vec<u8>, Vec<u8>> {
         let storage_key = format!("wasmi.storage.{}", name);
         MapIndex::new(&storage_key, self.view.as_ref())
-    } 
+    }
 }
 
 impl<'a> WasmSchema<&'a mut Fork> {
@@ -55,7 +55,7 @@ impl<'a> WasmSchema<&'a mut Fork> {
     pub fn storage_mut(&mut self, name: &str) -> MapIndex<&mut Fork, Vec<u8>, Vec<u8>> {
         let storage_key = format!("wasmi.storage.{}", name);
         MapIndex::new(&storage_key, &mut self.view)
-    } 
+    }
 }
 
 impl<'a> wasm::Storage for MapIndex<&'a mut Fork, Vec<u8>, Vec<u8>> {
@@ -86,6 +86,7 @@ impl Transaction for TxDeploy {
     }
 
     fn execute(&self, view: &mut Fork) {
+        info!("Deploying module: {}", self.name());
         let mut schema = WasmSchema::new(view);
         let contract = Contract::new(self.module());
         schema.contracts_mut().put(
@@ -101,12 +102,16 @@ impl Transaction for TxCall {
     }
 
     fn execute(&self, view: &mut Fork) {
+        info!("Calling module: {}", self.name());
         let mut schema = WasmSchema::new(view);
         let contract = schema.contract(&self.name().to_string());
         if let Some(contract) = contract {
+            info!("The contract found and calling with a data: {} ( {:?} )", self.func(), self.data());
             let mut storage = schema.storage_mut(self.name());
             let _ = wasm::execute(contract.module(), self.func(), self.data(), &mut storage);
             // TODO: can we return result here?
+            // We can to put it in the database and request it later, because we couldn't know
+            // when this transaction will be executed.
         }
     }
 }
@@ -114,12 +119,12 @@ impl Transaction for TxCall {
 // // // // // // // // // // REST API // // // // // // // // // //
 
 #[derive(Clone)]
-struct CryptocurrencyApi {
+struct WasmServiceApi {
     channel: ApiSender,
     blockchain: Blockchain,
 }
 
-impl CryptocurrencyApi {
+impl WasmServiceApi {
     fn post_transaction<T>(&self, req: &mut Request) -> IronResult<Response>
     where
         T: Transaction + Clone + for<'de> Deserialize<'de>,
@@ -163,7 +168,7 @@ impl CryptocurrencyApi {
     }
 }
 
-impl Api for CryptocurrencyApi {
+impl Api for WasmServiceApi {
     fn wire(&self, router: &mut Router) {
         let self_ = self.clone();
         let post_deploy = move |req: &mut Request| self_.post_transaction::<TxDeploy>(req);
@@ -210,7 +215,7 @@ impl Service for WasmService {
 
     fn public_api_handler(&self, ctx: &ApiContext) -> Option<Box<Handler>> {
         let mut router = Router::new();
-        let api = CryptocurrencyApi {
+        let api = WasmServiceApi {
             channel: ctx.node_channel().clone(),
             blockchain: ctx.blockchain().clone(),
         };
