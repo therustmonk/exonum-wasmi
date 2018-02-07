@@ -8,7 +8,9 @@ crate-type = ["cdylib"]
 
 [dependencies]
 exowasm-std = { path = "../exowasm-std" }
-byteorder = { version = "1", default-features = false }
+serde = "1"
+serde_derive = "1"
+serde_cbor = "0.8.2"
 
 [profile.release]
 panic = "abort"

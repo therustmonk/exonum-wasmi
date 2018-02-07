@@ -1,14 +1,9 @@
-#![no_std]
-#![feature(alloc)]
-
-extern crate exowasm_std;
-extern crate byteorder;
-
-// macro use for `format!`
+extern crate exowasm_std as ext;
+/*
 #[macro_use]
-extern crate alloc;
-
-use exowasm_std::ext;
+extern crate serde_derive;
+extern crate serde_cbor;
+*/
 
 #[no_mangle]
 pub fn transfer() {
@@ -19,5 +14,4 @@ pub fn transfer() {
 pub fn create_wallet() {
     let args = ext::args();
     ext::debug(format!("create wallet called, args={:?}", args).as_bytes());
-    unimplemented!()
 }

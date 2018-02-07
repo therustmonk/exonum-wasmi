@@ -1,32 +1,62 @@
-#![no_std]
-#![feature(lang_items)]
-#![feature(core_intrinsics)]
-#![feature(global_allocator)]
-#![feature(alloc)]
+mod ffi {
+    extern "C" {
+        pub fn debug(msg_ptr: *const u8, msg_len: usize);
 
-#[macro_use]
-extern crate alloc;
-extern crate rlibc;
-extern crate wee_alloc;
+        pub fn args(ptr: *mut u8);
+        pub fn args_len() -> usize;
 
-pub mod ext;
+        pub fn return_data(value_ptr: *const u8, value_len: usize);
 
-#[no_mangle]
-#[lang = "panic_fmt"]
-pub extern "C" fn panic_fmt(
-    args: ::core::fmt::Arguments,
-    file: &'static str,
-    line: u32,
-    col: u32,
-) -> ! {
-    use core::intrinsics;
+        pub fn set_storage(
+            key_ptr: *const u8,
+            key_len: usize,
+            value_ptr: *const u8,
+            value_len: usize,
+        );
 
-    let msg = format!("{}:{}:{}:{}", args, file, line, col);
-    unsafe {
-        ext::debug(msg.as_bytes());
-        intrinsics::abort();
+        pub fn get_storage_len(key_ptr: *const u8, key_len: usize) -> usize;
+
+        pub fn get_storage(key_ptr: *const u8, key_len: usize, value_ptr: *const u8);
     }
 }
 
-#[global_allocator]
-static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
+/// Print debug message to the console.
+pub fn debug(msg: &[u8]) {
+    unsafe {
+        ffi::debug(msg.as_ptr(), msg.len());
+    }
+}
+
+/// Return arguments for current request.
+pub fn args() -> Vec<u8> {
+    unsafe {
+        let args_len = ffi::args_len();
+        let mut args = vec![0u8; args_len];
+        ffi::args(args.as_mut_ptr());
+        args
+    }
+}
+
+/// Return data of the execution.
+pub fn return_data(value: &[u8]) {
+    unsafe {
+        ffi::return_data(value.as_ptr(), value.len());
+    }
+}
+
+/// Load value from key-value storage.
+pub fn get_storage(key: &[u8]) -> Vec<u8> {
+    unsafe {
+        let value_len = ffi::get_storage_len(key.as_ptr(), key.len());
+        let mut value = vec![0u8; value_len];
+        ffi::get_storage(key.as_ptr(), key.len(), value.as_mut_ptr());
+        value
+    }
+}
+
+/// Storage value to key-value storage.
+pub fn set_storage(key: &[u8], value: &[u8]) {
+    unsafe {
+        ffi::set_storage(key.as_ptr(), key.len(), value.as_ptr(), value.len());
+    }
+}
