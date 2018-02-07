@@ -13,5 +13,6 @@ pub fn transfer() {
 #[no_mangle]
 pub fn create_wallet() {
     let args = ext::args();
-    ext::debug(format!("create wallet called, args={:?}", args).as_bytes());
+    let sender = ext::sender();
+    ext::debug(format!("create wallet called, args={:?}, sender={:?}", args, sender.0).as_bytes());
 }

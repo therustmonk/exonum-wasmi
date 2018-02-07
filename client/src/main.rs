@@ -110,7 +110,7 @@ fn main() {
 fn call(contract_name: &str, func_name: &str, call_data: &[u8]) -> Result<(), Error> {
     let keypair = gen_keypair();
     let seed: u64 = rand::random();
-    let tx_call = TxCall::new(contract_name, func_name, call_data, seed, &keypair.1);
+    let tx_call = TxCall::new(&keypair.0, contract_name, func_name, call_data, seed, &keypair.1);
     let client = reqwest::Client::new();
     let res = client
         .post("http://localhost:8000/api/services/wasmi/contracts/call")

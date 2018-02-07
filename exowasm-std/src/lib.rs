@@ -1,6 +1,11 @@
+/// Public Key wrapper
+pub struct Sender(pub [u8; 32]);
+
 mod ffi {
     extern "C" {
         pub fn debug(msg_ptr: *const u8, msg_len: usize);
+
+        pub fn sender(ptr: *mut u8);
 
         pub fn args(ptr: *mut u8);
         pub fn args_len() -> usize;
@@ -25,6 +30,15 @@ pub fn debug(msg: &[u8]) {
     unsafe {
         ffi::debug(msg.as_ptr(), msg.len());
     }
+}
+
+/// Returns a sender
+pub fn sender() -> Sender {
+    let mut sender = Sender([0; 32]);
+    unsafe {
+        ffi::sender(sender.0.as_mut_ptr());
+    }
+    sender
 }
 
 /// Return arguments for current request.

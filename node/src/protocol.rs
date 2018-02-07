@@ -1,3 +1,5 @@
+use exonum::crypto::PublicKey;
+
 pub const SERVICE_ID: u16 = 1;
 
 pub const TX_DEPLOY: u16 = 1;
@@ -18,6 +20,7 @@ message! {
         const TYPE = SERVICE_ID;
         const ID = TX_CALL;
 
+        sender: &PublicKey,
         name: &str,
         func: &str,
         data: &[u8],
