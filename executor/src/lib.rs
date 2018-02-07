@@ -5,12 +5,13 @@ use wasmi::{Error, Externals, FuncInstance, FuncRef, ImportsBuilder, MemoryRef, 
             ValueType};
 
 const DEBUG_FUNC: usize = 0;
-const ARGS_FUNC: usize = 1;
-const ARGS_LEN_FUNC: usize = 2;
-const RETURN_DATA_FUNC: usize = 3;
-const SET_STORAGE_FUNC: usize = 4;
-const GET_STORAGE_FUNC: usize = 5;
-const GET_STORAGE_LEN_FUNC: usize = 6;
+const SENDER_FUNC: usize = 10;
+const ARGS_FUNC: usize = 20;
+const ARGS_LEN_FUNC: usize = 30;
+const RETURN_DATA_FUNC: usize = 40;
+const SET_STORAGE_FUNC: usize = 50;
+const GET_STORAGE_FUNC: usize = 60;
+const GET_STORAGE_LEN_FUNC: usize = 70;
 
 pub trait Storage {
     fn set(&mut self, key: &[u8], value: &[u8]);
@@ -19,6 +20,7 @@ pub trait Storage {
 
 struct Runtime<'a> {
     memory: MemoryRef,
+    sender: &'a [u8; 32],
     args: &'a [u8],
     return_data: Vec<u8>,
     storage: &'a mut Storage,
@@ -49,6 +51,11 @@ impl<'a> Externals for Runtime<'a> {
                 let msg = String::from_utf8_lossy(&msg_buf);
                 println!("[wasm]: {}", msg);
 
+                Ok(None)
+            }
+            SENDER_FUNC => {
+                let ptr: u32 = args.nth(0);
+                self.memory.set(ptr, self.sender).expect("Failed to set sender");
                 Ok(None)
             }
             ARGS_LEN_FUNC => {
@@ -138,6 +145,7 @@ impl RuntimeImportResolver {
 
         let (params, ret_ty): (&[ValueType], Option<ValueType>) = match index {
             DEBUG_FUNC => (&[I32, I32], None),
+            SENDER_FUNC => (&[I32], None),
             ARGS_FUNC => (&[I32], None),
             ARGS_LEN_FUNC => (&[], Some(I32)),
             RETURN_DATA_FUNC => (&[I32, I32], None),
@@ -155,6 +163,7 @@ impl ModuleImportResolver for RuntimeImportResolver {
     fn resolve_func(&self, field_name: &str, signature: &Signature) -> Result<FuncRef, Error> {
         let index = match field_name {
             "debug" => DEBUG_FUNC,
+            "sender" => SENDER_FUNC,
             "args" => ARGS_FUNC,
             "args_len" => ARGS_LEN_FUNC,
             "return_data" => RETURN_DATA_FUNC,
@@ -178,7 +187,7 @@ impl ModuleImportResolver for RuntimeImportResolver {
     }
 }
 
-pub fn execute(wasm: &[u8], func_name: &str, args: &[u8], storage: &mut Storage) -> Vec<u8> {
+pub fn execute(wasm: &[u8], func_name: &str, args: &[u8], sender: &[u8; 32], storage: &mut Storage) -> Vec<u8> {
     let module = Module::from_buffer(wasm).expect("Can't load wasm");
     let instance = ModuleInstance::new(
         &module,
@@ -194,6 +203,7 @@ pub fn execute(wasm: &[u8], func_name: &str, args: &[u8], storage: &mut Storage)
 
     let mut runtime = Runtime {
         memory,
+        sender,
         args,
         return_data: Vec::new(),
         storage,

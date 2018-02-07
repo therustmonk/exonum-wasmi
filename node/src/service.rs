@@ -116,7 +116,9 @@ impl Transaction for TxCall {
                 self.data()
             );
             let mut storage = schema.storage_mut(self.name());
-            let _ = wasm::execute(contract.module(), self.func(), self.data(), &mut storage);
+            let mut sender = [0u8; 32];
+            sender.copy_from_slice(self.sender().as_ref());
+            let _ = wasm::execute(contract.module(), self.func(), self.data(), &sender,  &mut storage);
             // TODO: can we return result here?
             // We can to put it in the database and request it later, because we couldn't know
             // when this transaction will be executed.
@@ -168,7 +170,8 @@ impl WasmServiceApi {
         let contract = schema.contract(&query.name().to_string());
         if let Some(contract) = contract {
             let mut storage = schema.storage(query.name());
-            let result = wasm::execute(contract.module(), query.func(), query.data(), &mut storage);
+            let sender = [0u8; 32];
+            let result = wasm::execute(contract.module(), query.func(), query.data(), &sender, &mut storage);
             self.ok_response(&serde_json::to_value(result).unwrap())
         } else {
             self.not_found_response(&serde_json::to_value("not found").unwrap())
