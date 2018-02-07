@@ -2,7 +2,7 @@
 
 set -eux
 
-cargo build --verbose
+cargo build --all --verbose
 
 # Build cryptocurrency example. This will build exowasm-std transitively.
 ./cryptocurrency/build.sh
