@@ -1,5 +1,19 @@
+extern crate serde;
+#[macro_use]
+extern crate serde_derive;
+extern crate serde_cbor;
+
+use serde::{Serialize, Deserialize};
+
 /// Public Key wrapper
+#[derive(Serialize, Deserialize)]
 pub struct Sender(pub [u8; 32]);
+
+impl AsRef<[u8]> for Sender {
+    fn as_ref(&self) -> &[u8] {
+        self.0.as_ref()
+    }
+}
 
 mod ffi {
     extern "C" {
@@ -42,12 +56,15 @@ pub fn sender() -> Sender {
 }
 
 /// Return arguments for current request.
-pub fn args() -> Vec<u8> {
+pub fn args<T>() -> T
+where
+    T: for <'de> Deserialize<'de>,
+{
     unsafe {
         let args_len = ffi::args_len();
         let mut args = vec![0u8; args_len];
         ffi::args(args.as_mut_ptr());
-        args
+        serde_cbor::from_slice(&args).expect("can't parse arguments")
     }
 }
 
@@ -59,17 +76,32 @@ pub fn return_data(value: &[u8]) {
 }
 
 /// Load value from key-value storage.
-pub fn get_storage(key: &[u8]) -> Vec<u8> {
+pub fn get_storage<K, OUT>(key: K) -> Option<OUT>
+where
+    K: AsRef<[u8]>,
+    OUT: for <'de> Deserialize<'de>,
+{
+    let key = key.as_ref();
     unsafe {
         let value_len = ffi::get_storage_len(key.as_ptr(), key.len());
-        let mut value = vec![0u8; value_len];
-        ffi::get_storage(key.as_ptr(), key.len(), value.as_mut_ptr());
-        value
+        if value_len > 0 {
+            let mut value = vec![0u8; value_len];
+            ffi::get_storage(key.as_ptr(), key.len(), value.as_mut_ptr());
+            serde_cbor::from_slice(&value).ok()
+        } else {
+            None
+        }
     }
 }
 
 /// Storage value to key-value storage.
-pub fn set_storage(key: &[u8], value: &[u8]) {
+pub fn set_storage<K, IN>(key: K, value: &IN)
+where
+    K: AsRef<[u8]>,
+    IN: Serialize,
+{
+    let key = key.as_ref();
+    let value = serde_cbor::to_vec(&value).expect("can't serialize a value");
     unsafe {
         ffi::set_storage(key.as_ptr(), key.len(), value.as_ptr(), value.len());
     }

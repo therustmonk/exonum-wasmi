@@ -4,8 +4,6 @@ version = "0.1.0"
 authors = ["Sergey Pepyakin <s.pepyakin@gmail.com>"]
 
 [dependencies]
-# Allocator crate,
-# We don't need all the features, we just need bare-bones allocator.
-#wee_alloc = { git = "https://github.com/fitzgen/wee_alloc.git", rev = "05d369a", default-features = false }
-# memcpy, etc
-#rlibc = "1.0"
+serde = "1"
+serde_derive = "1"
+serde_cbor = "0.8"
