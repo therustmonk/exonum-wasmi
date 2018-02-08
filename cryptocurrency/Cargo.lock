@@ -9,13 +9,17 @@ version = "0.1.0"
 dependencies = [
  "exowasm-std 0.1.0",
  "serde 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
- "serde_cbor 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "serde_derive 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
 name = "exowasm-std"
 version = "0.1.0"
+dependencies = [
+ "serde 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_cbor 0.8.2 (registry+https://github.com/rust-lang/crates.io-index)",
+ "serde_derive 1.0.27 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "quote"

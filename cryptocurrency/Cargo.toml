@@ -10,7 +10,6 @@ crate-type = ["cdylib"]
 exowasm-std = { path = "../exowasm-std" }
 serde = "1"
 serde_derive = "1"
-serde_cbor = "0.8.2"
 
 [profile.release]
 panic = "abort"
