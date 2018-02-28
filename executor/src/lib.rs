@@ -12,6 +12,7 @@ const RETURN_DATA_FUNC: usize = 40;
 const SET_STORAGE_FUNC: usize = 50;
 const GET_STORAGE_FUNC: usize = 60;
 const GET_STORAGE_LEN_FUNC: usize = 70;
+const EXP2F_FUNC: usize = 80;
 
 pub trait Storage {
     fn set(&mut self, key: &[u8], value: &[u8]);
@@ -130,6 +131,9 @@ impl<'a> Externals for Runtime<'a> {
 
                 Ok(Some(len.into()))
             }
+            EXP2F_FUNC => {
+                Ok(Some(0f32.into()))
+            }
             _ => {
                 // TODO: Implement all the stuff/
                 Ok(None)
@@ -152,6 +156,7 @@ impl RuntimeImportResolver {
             SET_STORAGE_FUNC => (&[I32, I32, I32, I32], None),
             GET_STORAGE_FUNC => (&[I32, I32, I32], None),
             GET_STORAGE_LEN_FUNC => (&[I32, I32], Some(I32)),
+            EXP2F_FUNC => (&[F32], Some(F32)),
             _ => return false,
         };
 
@@ -170,6 +175,7 @@ impl ModuleImportResolver for RuntimeImportResolver {
             "set_storage" => SET_STORAGE_FUNC,
             "get_storage" => GET_STORAGE_FUNC,
             "get_storage_len" => GET_STORAGE_LEN_FUNC,
+            "exp2f" => EXP2F_FUNC,
             _ => {
                 return Err(Error::Instantiation(
                     format!("Export {} not found", field_name),
