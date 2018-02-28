@@ -12,24 +12,24 @@ When the project is build all necessary binaries placed to `./target/debug` dire
 To run the node use:
 
 ```
-exowasm-node
+./target/debug/exowasm-node
 ```
 
 
 To deploy the test kernel:
 
 ```
-exowasm-client deploy cryptocurrency cryptocurrency/cryptocurrency.wasm
+./target/debug/exowasm-client deploy cryptocurrency cryptocurrency/cryptocurrency.wasm
 ```
 
 To call simple test you can run the following command
 
 ```
-exowasm-client call cryptocurrency create_wallet
+./target/debug/exowasm-client call cryptocurrency create_wallet
 ```
 
 If you need to pass arguments to wasm you can pass it in HEX like:
 
 ```
-exowasm-client call cryptocurrency create_wallet 4045
+./target/debug/exowasm-client call cryptocurrency create_wallet 4045
 ```
